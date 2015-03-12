@@ -5,7 +5,6 @@
 
 package nallar.ps2edit;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import nallar.ps2edit.util.Throw;
 
@@ -23,7 +22,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
-	private final static String[] ps2Dirs = new String[]{"C:\\Steam\\SteamApps\\common\\PlanetSide 2", "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\PlanetSide 2"};
+	private final static String[] ps2Dirs = new String[]{
+			"C:\\Steam\\SteamApps\\common\\PlanetSide 2",
+			"C:\\Program Files (x86)\\Steam\\SteamApps\\common\\PlanetSide 2",
+			"C:\\Program Files\\Steam\\SteamApps\\common\\PlanetSide 2"
+	};
 	private static boolean START_GAME = false;
 	private static final Pattern SPACE_PATTERN = Pattern.compile(" ");
 	private static final Pattern COMMA_PATTERN = Pattern.compile(",");
@@ -45,7 +48,7 @@ public class Main {
 
 		for (String replacementFilePathPath : ps2Dirs) {
 			triedPs2Dir = new File(replacementFilePathPath);
-			if (triedPs2Dir.exists() && triedPs2Dir.isDirectory()) {
+			if (triedPs2Dir.exists() && triedPs2Dir.isDirectory() && new File(triedPs2Dir, "PlanetSide2.exe").exists()) {
 				break;
 			}
 
@@ -63,19 +66,6 @@ public class Main {
 		cCLLP = new File(ps2Dir, "ClientConfigLiveLaunchpad.ini");
 	}
 
-	private static long profile(String partDone) {
-		long newTime = System.nanoTime();
-		System.out.println(partDone + " took " + (float) (newTime - lastTime) / 1.0E9F + " seconds.");
-		return lastTime = System.nanoTime();
-	}
-
-	static void sleep(double s) {
-		try {
-			Thread.sleep((long) (s * 1000.0D));
-		} catch (InterruptedException ignored) {
-		}
-	}
-
 	public static void main(String[] args) {
 		try {
 			new Main().runGameWithPatches();
@@ -86,22 +76,6 @@ public class Main {
 			sleep(START_GAME ? 30.0D : 180.0D);
 		}
 
-	}
-
-
-	private static final String original = "[CrashReporter]\r\nAddress=ps2recap.station.sony.com:15081\r\n";
-	private static final String modified = "[CrashReporter]\r\nAddress=ation.tony.com:15081\r\nEnabled=0\r\n";
-
-	private void revertCCLLP() {
-		if (!Utils.replaceWithoutModified(cCLLP, original, modified)) {
-			throw new RuntimeException("Failed to update cCLP.ini, missing search string " + original);
-		}
-	}
-
-	private void modifyCCLLP() {
-		if (!Utils.replaceWithoutModified(cCLLP, modified, original)) {
-			System.err.println("cCLLP.ini not already modified, can\'t revert.");
-		}
 	}
 
 	private void runGameWithPatches() throws IOException {
@@ -122,19 +96,7 @@ public class Main {
 			lastTime = System.nanoTime();
 		}
 
-		String original;
-		if (replacementFilePathPath.exists()) {
-			original = new String(Files.readAllBytes(replacementFilePathPath.toPath()), Charsets.UTF_8);
-			if (!(new File(original)).delete() || !replacementFilePathPath.delete()) {
-				System.err.println("Failed to delete replacement pack file.");
-				sleep(5.0D);
-				if (!replacementFilePathPath.delete()) {
-					replacementFilePathPath.deleteOnExit();
-					System.err.println("Still failed to delete replacement pack file. Giving up.");
-					return;
-				}
-			}
-		}
+		Assets.deleteReplacement(replacementFilePathPath);
 
 		profile("Deleting old replacement pack file");
 
@@ -157,28 +119,58 @@ public class Main {
 		lastTime = System.nanoTime();
 		revertCCLLP();
 		profile("Updated cCLLP");
-		final Assets var62 = new Assets(assetsDir, replacementFilePathPath);
-		profile("Loading " + var62.getNumFiles() + " from assets");
-		final int[] foundFonts = new int[1];
-		final File finalTriedFile = ps2Dir;
-		Files.walkFileTree((new File(replacementsDir, "fonts")).toPath(), new SimpleFileVisitor<Path>() {
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				super.visitFile(file, attrs);
-				File original = new File(finalTriedFile, "UI/Resource/Fonts/" + file.getFileName());
-				if (original.delete()) {
-					Files.copy(file, original.toPath());
-					++foundFonts[0];
-				}
+		final Assets assets = new Assets(assetsDir, replacementFilePathPath);
+		profile("Loading " + assets.getNumFiles() + " from assets");
+		profile("Replacing " + replaceFonts() + " fonts");
+		loadReplacements(assets);
+		profile("Adding assets_replace actions");
 
-				return FileVisitResult.CONTINUE;
-			}
-		});
-		profile("Replacing " + foundFonts[0] + " fonts");
+		loadEffects(assets);
+		profile("Adding effects.yml actions");
+
+		assets.save();
+		profile("Writing assets");
+
+		System.out.println("Updated " + assets.getNumFilesUpdated() + " entries.");
+
+	}
+
+	private static long profile(String partDone) {
+		long newTime = System.nanoTime();
+		System.out.println(partDone + " took " + (float) (newTime - lastTime) / 1.0E9F + " seconds.");
+		return lastTime = System.nanoTime();
+	}
+
+	static void sleep(double s) {
+		try {
+			Thread.sleep((long) (s * 1000.0D));
+		} catch (InterruptedException ignored) {
+		}
+	}
+
+	private static final String original = "[CrashReporter]\r\nAddress=ps2recap.station.sony.com:15081\r\n";
+	private static final String modified = "[CrashReporter]\r\nAddress=ation.tony.com:15081\r\nEnabled=0\r\n";
+
+	private void revertCCLLP() {
+		if (!Utils.replaceWithoutModified(cCLLP, original, modified)) {
+			throw new RuntimeException("Failed to update cCLP.ini, missing search string " + original);
+		}
+	}
+
+	private void modifyCCLLP() {
+		if (!Utils.replaceWithoutModified(cCLLP, modified, original)) {
+			System.err.println("cCLLP.ini not already modified, can\'t revert.");
+		}
+	}
+
+	private void loadReplacements(Assets assets) {
 		File[] replacementFiles = replacementsDir.listFiles();
+		if (replacementFiles == null) {
+			throw Throw.sneaky(new IOException("Replacement file dir " + replacementsDir + " does not exist."));
+		}
 
-		String entry;
 		for (final File replacement : replacementFiles) {
-			entry = replacement.getName();
+			String entry = replacement.getName();
 			if (entry.contains(".") && !replacement.isDirectory() && !entry.equals("effects.yml")) {
 				final boolean from = entry.endsWith(".obj");
 				if (from) {
@@ -186,17 +178,17 @@ public class Main {
 				}
 
 				final String finalEntry = entry;
-				if (!var62.addAction(entry, () -> {
+				if (!assets.addAction(entry, () -> {
 					try {
 						byte[] e;
 						if (from) {
-							e = var62.getByteData(finalEntry).clone();
+							e = assets.getByteData(finalEntry).clone();
 							DMEFile.replaceMesh(e, replacement);
 						} else {
 							e = Files.readAllBytes(replacement.toPath());
 						}
 
-						var62.setByteData(finalEntry, e);
+						assets.setByteData(finalEntry, e);
 					} catch (IOException var2) {
 						throw Throwables.propagate(var2);
 					}
@@ -205,13 +197,14 @@ public class Main {
 				}
 			}
 		}
+	}
 
-		profile("Adding assets_replace actions");
+	private void loadEffects(Assets assets) throws IOException {
 		File effectsFile = new File(replacementsDir, "effects.yml");
 
 		try (BufferedReader effectsReader = new BufferedReader(new FileReader(effectsFile))) {
 			String type = null;
-			entry = null;
+			String entry = null;
 			String previousLine = null;
 
 			String line;
@@ -221,54 +214,54 @@ public class Main {
 					if (line.length() > 0 && line.charAt(line.length() - 1) == ':') {
 						type = line.substring(0, line.length() - 1);
 						entry = type.contains(".") ? type : null;
-					} else {
-						if (entry != null) {
-							if (previousLine == null) {
-								previousLine = line;
-							} else {
-								String[] entries;
-								if (entry.contains(",")) {
-									entries = COMMA_PATTERN.split(entry);
-								} else {
-									entries = new String[]{entry};
-								}
-
-								ArrayList<String> entriesList = new ArrayList<>();
-
-								for (String e1 : entries) {
-									Matcher matcher = RANGE_PATTERN.matcher(e1);
-									if (matcher.find()) {
-										int f = Integer.valueOf(matcher.group(1));
-										int t = Integer.valueOf(matcher.group(2));
-
-										for (int i = f; i <= t; ++i) {
-											entriesList.add(matcher.replaceFirst(String.valueOf(i)));
-										}
-									} else {
-										entriesList.add(e1);
-									}
-								}
-
-								for (String anEntriesList : entriesList) {
-									line = line.replace("\\n", "\n");
-									var62.addReplaceAction(anEntriesList, previousLine, line);
-								}
-
-								previousLine = null;
-							}
+					} else if (entry != null) {
+						if (previousLine == null) {
+							previousLine = line;
 						} else {
-							switch (type) {
-								case "shader":
-									var62.addReplaceAction("materials_3.xml", "Effect=\"" + line + '\"', "Effect=\"\"");
-									break;
-								case "variable":
-									String[] parts = SPACE_PATTERN.split(line);
-									var62.addReplaceAction("materials_3.xml", "Variable=\"" + parts[0] + "\" Default=\"" + parts[1] + '\"', "Variable=\"" + parts[0] + "\" Default=\"" + parts[2] + '\"');
-									break;
-								default:
-									System.err.println("Unkown action " + type + " is set.");
+							String[] entries;
+							if (entry.contains(",")) {
+								entries = COMMA_PATTERN.split(entry);
+							} else {
+								entries = new String[]{entry};
 							}
+
+							ArrayList<String> entriesList = new ArrayList<>();
+
+							for (String e1 : entries) {
+								Matcher matcher = RANGE_PATTERN.matcher(e1);
+								if (matcher.find()) {
+									int f = Integer.valueOf(matcher.group(1));
+									int t = Integer.valueOf(matcher.group(2));
+
+									for (int i = f; i <= t; ++i) {
+										entriesList.add(matcher.replaceFirst(String.valueOf(i)));
+									}
+								} else {
+									entriesList.add(e1);
+								}
+							}
+
+							for (String anEntriesList : entriesList) {
+								line = line.replace("\\n", "\n");
+								assets.addReplaceAction(anEntriesList, previousLine, line);
+							}
+
+							previousLine = null;
 						}
+					} else if (type != null) {
+						switch (type) {
+							case "shader":
+								assets.addReplaceAction("materials_3.xml", "Effect=\"" + line + '\"', "Effect=\"\"");
+								break;
+							case "variable":
+								String[] parts = SPACE_PATTERN.split(line);
+								assets.addReplaceAction("materials_3.xml", "Variable=\"" + parts[0] + "\" Default=\"" + parts[1] + '\"', "Variable=\"" + parts[0] + "\" Default=\"" + parts[2] + '\"');
+								break;
+							default:
+								System.err.println("Unkown action " + type + " is set.");
+						}
+					} else {
+						throw new RuntimeException("Unknown state. Line: '" + line + "'");
 					}
 				}
 			}
@@ -277,12 +270,27 @@ public class Main {
 				System.err.println("Dangling replace: from still set to " + previousLine);
 			}
 		}
+	}
 
-		profile("Adding effects.yml actions");
-		var62.save();
-		profile("Writing assets");
-		System.out.println("Updated " + var62.getNumFilesUpdated() + " entries.");
+	private int replaceFonts() {
+		final int[] foundFonts = new int[1];
+		try {
+			Files.walkFileTree((new File(replacementsDir, "fonts")).toPath(), new SimpleFileVisitor<Path>() {
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					super.visitFile(file, attrs);
+					File original = new File(ps2Dir, "UI/Resource/Fonts/" + file.getFileName());
+					if (original.delete()) {
+						Files.copy(file, original.toPath());
+						++foundFonts[0];
+					}
 
+					return FileVisitResult.CONTINUE;
+				}
+			});
+		} catch (IOException e) {
+			throw Throw.sneaky(e);
+		}
+		return foundFonts[0];
 	}
 
 	private void waitForLaunchpadReady() {
@@ -318,6 +326,7 @@ public class Main {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private boolean checkShouldPatchEnd() {
 		checkShouldPatch.interrupt();
 		checkShouldPatch.stop(new Throwable("stop patch"));
