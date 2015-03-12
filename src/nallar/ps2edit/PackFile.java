@@ -33,7 +33,9 @@ public class PackFile {
 
         try {
             if(!file.exists()) {
-                file.createNewFile();
+                if (!file.createNewFile()) {
+					throw new RuntimeException("Failed to create new pack file " + file);
+				}
                 this.makeHeader();
             } else {
                 this.open_Read();
@@ -96,7 +98,7 @@ public class PackFile {
     }
 
     private void makeHeader() {
-        short headerFree = 2050;
+        short headerFree = MAX_HEADER_SIZE;
         int end = this.expand(headerFree);
         this.open();
         this.f.position(this.lastHeader);
@@ -276,7 +278,7 @@ public class PackFile {
     }
 
     public int asInt() {
-        return Integer.valueOf(this.file.getName().replace("Assets_", "").replace(".pack", "")).intValue();
+        return Integer.valueOf(this.file.getName().replace("Assets_", "").replace(".pack", ""));
     }
 
     public class Entry {
@@ -320,7 +322,7 @@ public class PackFile {
         public void setData(int from, byte[] data) {
             byte[] oldData = this.getData();
             System.arraycopy(data, 0, oldData, from, data.length);
-            this.setData((byte[])oldData);
+            this.setData(oldData);
         }
 
         public void setData(byte[] data) {
@@ -349,7 +351,7 @@ public class PackFile {
         }
 
         public void setData(String data) {
-            this.setData((byte[])data.getBytes(PackFile.charset));
+            this.setData(data.getBytes(PackFile.charset));
         }
 
         public void writeEntryFullyAtCurrentPosition() {

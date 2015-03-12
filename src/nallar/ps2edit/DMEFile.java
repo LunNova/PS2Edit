@@ -37,8 +37,8 @@ public class DMEFile {
             b.position(b.position() + dmat_length);
             debug("dmot version is " + version);
             debug("dmat_length is " + dmat_length);
-            t.read((ByteBuffer)b);
-            t.read((ByteBuffer)b);
+            t.read(b);
+            t.read(b);
             int mesh_count = b.getInt();
             debug("mesh_count is " + mesh_count);
 
@@ -86,8 +86,7 @@ public class DMEFile {
 
                                 String line;
                                 for(line = br.readLine(); line != null && (line.length() <= 0 || line.charAt(0) != 118); line = br.readLine()) {
-                                    ;
-                                }
+								}
 
                                 if(line == null) {
                                     t.x = 0.0F;
@@ -98,7 +97,7 @@ public class DMEFile {
                                         warnEmpty = false;
                                     }
                                 } else {
-                                    t.read((String)line);
+                                    t.read(line);
                                 }
 
                                 t.write(data, b.position(), bytes_per_vertex, x2);
@@ -151,8 +150,8 @@ public class DMEFile {
             b.position(b.position() + dmat_length);
             debug("dmot version is " + version);
             debug("dmat_length is " + dmat_length);
-            t.read((ByteBuffer)b);
-            t.read((ByteBuffer)b);
+            t.read(b);
+            t.read(b);
             int mesh_count = b.getInt();
             debug("mesh_count is " + mesh_count);
             BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(objFile));
@@ -227,7 +226,7 @@ public class DMEFile {
         }
 
         public vector(ByteBuffer bb) {
-            this.read((ByteBuffer)bb);
+            this.read(bb);
         }
 
         String write() {
@@ -235,13 +234,13 @@ public class DMEFile {
         }
 
         void read(String line) {
-            String[] parts = (String[])Iterables.toArray(splitter.split(line), String.class);
+            String[] parts = Iterables.toArray(splitter.split(line), String.class);
             if(!parts[0].equals("v")) {
                 throw new RuntimeException("Can\'t read " + line + " into vector, expected start \'v\'");
             } else {
-                this.x = Float.valueOf(parts[1]).floatValue();
-                this.y = Float.valueOf(parts[2]).floatValue();
-                this.z = Float.valueOf(parts[3]).floatValue();
+                this.x = Float.valueOf(parts[1]);
+                this.y = Float.valueOf(parts[2]);
+                this.z = Float.valueOf(parts[3]);
             }
         }
 

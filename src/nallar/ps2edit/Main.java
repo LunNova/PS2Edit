@@ -8,15 +8,8 @@ package nallar.ps2edit;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import java.awt.Desktop;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
-import java.nio.file.CopyOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,8 +45,7 @@ public class Main {
         try {
             Thread.sleep((long)(s * 1000.0D));
         } catch (InterruptedException var3) {
-            ;
-        }
+		}
 
     }
 
@@ -83,40 +75,37 @@ public class Main {
 
                     ignored.readLine();
                     Main.shouldPatch = false;
-                } catch (Throwable var2) {
-                    ;
-                }
-
+                } catch (Throwable ignored) {
+				}
             }
         };
         checkShouldPatch.start();
         boolean waitForSteamToBeSlowAndRealisePS2HasExited = Utils.kill("wws_crashreport_uploader.exe") || Utils.kill("Launchpad.exe") || Utils.kill("AwesomiumProcess.exe") || Utils.kill("Planetside2.exe");
         profile("Killing PS2 tasks");
         String[] ps2Dirs = new String[]{"C:\\Steam\\SteamApps\\common\\PlanetSide 2", "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\PlanetSide 2"};
-        final File triedFile = null;
-        String[] ps2Dir = ps2Dirs;
-        int assetsDir = ps2Dirs.length;
+        File triedFile = null;
 
-        for(int replacementAssetsDir = 0; replacementAssetsDir < assetsDir; ++replacementAssetsDir) {
-            String replacementFilePathPath = ps2Dir[replacementAssetsDir];
-            triedFile = new File(replacementFilePathPath);
-            if(triedFile.exists() && triedFile.isDirectory()) {
-                break;
-            }
+		for (String replacementFilePathPath : ps2Dirs) {
+			triedFile = new File(replacementFilePathPath);
+			if (triedFile.exists() && triedFile.isDirectory()) {
+				break;
+			}
 
-            triedFile = null;
-        }
+			triedFile = null;
+		}
 
         if(triedFile == null) {
             throw new RuntimeException("Failed to detect PS2 directory, tried:\n" + Arrays.toString(ps2Dirs));
         } else {
-            File var59 = new File(triedFile, "Resources" + File.separator + "Assets");
-            File var60 = new File(triedFile, "backup");
-            File var61 = new File(var60, "replacementFilePath");
+            File assetsDir = new File(triedFile, "Resources" + File.separator + "Assets");
+            File replacementsDir = new File(triedFile, "backup");
+            File replacementFilePathPath = new File(replacementsDir, "replacementFilePath");
             File downloadInfo = new File(triedFile, ".DownloadInfo.txt");
             File logsDirectory = new File(triedFile, "Logs");
             File cCLLP = new File(triedFile, "ClientConfigLiveLaunchpad.ini");
-            downloadInfo.delete();
+            if (downloadInfo.exists() && !downloadInfo.delete()) {
+				throw new RuntimeException("Failed to delete old downloadInfo");
+			}
             if(logsDirectory.exists()) {
                 Utils.removeRecursive(logsDirectory.toPath());
                 System.out.println("Cleaned up PS2 logs directory");
@@ -128,13 +117,13 @@ public class Main {
             }
 
             String original;
-            if(var61.exists()) {
-                original = new String(Files.readAllBytes(var61.toPath()), Charsets.UTF_8);
-                if(!(new File(original)).delete() || !var61.delete()) {
+            if(replacementFilePathPath.exists()) {
+                original = new String(Files.readAllBytes(replacementFilePathPath.toPath()), Charsets.UTF_8);
+                if(!(new File(original)).delete() || !replacementFilePathPath.delete()) {
                     System.err.println("Failed to delete replacement pack file.");
                     sleep(5.0D);
-                    if(!var61.delete()) {
-                        var61.deleteOnExit();
+                    if(!replacementFilePathPath.delete()) {
+                        replacementFilePathPath.deleteOnExit();
                         System.err.println("Still failed to delete replacement pack file. Giving up.");
                         return;
                     }
@@ -195,8 +184,7 @@ public class Main {
 
                     }
                 } catch (FileNotFoundException var58) {
-                    ;
-                }
+				}
             }
 
             checkShouldPatch.interrupt();
@@ -210,79 +198,77 @@ public class Main {
                     throw new RuntimeException("Failed to update cCLP.ini, missing search string " + original);
                 } else {
                     profile("Updated cCLLP");
-                    final Assets var62 = new Assets(var59, var61);
+                    final Assets var62 = new Assets(assetsDir, replacementFilePathPath);
                     profile("Loading " + var62.getNumFiles() + " from assets");
-                    final int[] var63 = new int[1];
-                    Files.walkFileTree((new File(var60, "fonts")).toPath(), new SimpleFileVisitor() {
+                    final int[] foundFonts = new int[1];
+					final File finalTriedFile = triedFile;
+					Files.walkFileTree((new File(replacementsDir, "fonts")).toPath(), new SimpleFileVisitor<Path>() {
                         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                             super.visitFile(file, attrs);
-                            File original = new File(triedFile, "UI/Resource/Fonts/" + file.getFileName());
+                            File original = new File(finalTriedFile, "UI/Resource/Fonts/" + file.getFileName());
                             if(original.delete()) {
-                                Files.copy(file, original.toPath(), new CopyOption[0]);
-                                ++var63[0];
+                                Files.copy(file, original.toPath());
+                                ++foundFonts[0];
                             }
 
                             return FileVisitResult.CONTINUE;
                         }
                     });
-                    profile("Replacing " + var63[0] + " fonts");
-                    File[] var64 = var60.listFiles();
-                    int var66 = var64.length;
+                    profile("Replacing " + foundFonts[0] + " fonts");
+                    File[] replacementFiles = replacementsDir.listFiles();
 
-                    final String entry;
-                    for(int i$ = 0; i$ < var66; ++i$) {
-                        final File x2 = var64[i$];
-                        entry = x2.getName();
-                        if(entry.contains(".") && !x2.isDirectory() && !entry.equals("effects.yml")) {
-                            final boolean from = entry.endsWith(".obj");
-                            if(from) {
-                                entry = entry.replace(".obj", ".dme");
-                            }
+                    String entry;
+					for (final File replacement : replacementFiles) {
+						entry = replacement.getName();
+						if (entry.contains(".") && !replacement.isDirectory() && !entry.equals("effects.yml")) {
+							final boolean from = entry.endsWith(".obj");
+							if (from) {
+								entry = entry.replace(".obj", ".dme");
+							}
 
-                            if(!var62.addAction(entry, new Runnable() {
-                                public void run() {
-                                    try {
-                                        byte[] e;
-                                        if(from) {
-                                            e = (byte[])var62.getByteData(entry).clone();
-                                            DMEFile.replaceMesh(e, x2);
-                                        } else {
-                                            e = Files.readAllBytes(x2.toPath());
-                                        }
+							final String finalEntry = entry;
+							if (!var62.addAction(entry, () -> {
+								try {
+									byte[] e;
+									if (from) {
+										e = var62.getByteData(finalEntry).clone();
+										DMEFile.replaceMesh(e, replacement);
+									} else {
+										e = Files.readAllBytes(replacement.toPath());
+									}
 
-                                        var62.setByteData(entry, e);
-                                    } catch (IOException var2) {
-                                        throw Throwables.propagate(var2);
-                                    }
-                                }
-                            })) {
-                                System.err.println("Failed to find file " + x2.getName() + " in assets pack to replace.");
-                            }
-                        }
-                    }
+									var62.setByteData(finalEntry, e);
+								} catch (IOException var2) {
+									throw Throwables.propagate(var2);
+								}
+							})) {
+								System.err.println("Failed to find file " + replacement.getName() + " in assets pack to replace.");
+							}
+						}
+					}
 
                     profile("Adding assets_replace actions");
-                    File var65 = new File(var60, "effects.yml");
-                    BufferedReader var67 = new BufferedReader(new FileReader(var65));
+                    File effectsFile = new File(replacementsDir, "effects.yml");
+                    BufferedReader effectsReader = new BufferedReader(new FileReader(effectsFile));
                     Throwable var68 = null;
 
                     try {
-                        String var69 = null;
+                        String type = null;
                         entry = null;
-                        String var70 = null;
+                        String previousLine = null;
 
                         String line;
-                        while((line = var67.readLine()) != null) {
-                            if(!line.trim().isEmpty() && (line.length() <= 0 || line.charAt(0) != 35)) {
+                        while((line = effectsReader.readLine()) != null) {
+                            if(!line.trim().isEmpty() && (line.length() == 0 || line.charAt(0) != 35)) {
                                 line = line.replace("\t", "").replace("\\t", "\t");
-                                if(line.length() > 0 && line.charAt(line.length() - 1) == 58) {
-                                    var69 = line.substring(0, line.length() - 1);
-                                    entry = var69.contains(".")?var69:null;
+                                if(line.length() > 0 && line.charAt(line.length() - 1) == ':') {
+                                    type = line.substring(0, line.length() - 1);
+                                    entry = type.contains(".")?type:null;
                                 } else {
                                     String[] v;
                                     if(entry != null) {
-                                        if(var70 == null) {
-                                            var70 = line;
+                                        if(previousLine == null) {
+                                            previousLine = line;
                                         } else {
                                             String[] entries;
                                             if(entry.contains(",")) {
@@ -291,7 +277,7 @@ public class Main {
                                                 entries = new String[]{entry};
                                             }
 
-                                            ArrayList entriesList = new ArrayList();
+                                            ArrayList<String> entriesList = new ArrayList<>();
                                             v = entries;
                                             int e = entries.length;
 
@@ -299,8 +285,8 @@ public class Main {
                                                 String e1 = v[i$1];
                                                 Matcher matcher = RANGE_PATTERN.matcher(e1);
                                                 if(matcher.find()) {
-                                                    int f = Integer.valueOf(matcher.group(1)).intValue();
-                                                    int t = Integer.valueOf(matcher.group(2)).intValue();
+                                                    int f = Integer.valueOf(matcher.group(1));
+                                                    int t = Integer.valueOf(matcher.group(2));
 
                                                     for(int i = f; i <= t; ++i) {
                                                         entriesList.add(matcher.replaceFirst(String.valueOf(i)));
@@ -310,62 +296,46 @@ public class Main {
                                                 }
                                             }
 
-                                            Iterator var72 = entriesList.iterator();
+											for (String anEntriesList : entriesList) {
+												line = line.replace("\\n", "\n");
+												var62.addReplaceAction(anEntriesList, previousLine, line);
+											}
 
-                                            while(var72.hasNext()) {
-                                                String var73 = (String)var72.next();
-                                                line = line.replace("\\n", "\n");
-                                                var62.addReplaceAction(var73, var70, line);
-                                            }
-
-                                            var70 = null;
+                                            previousLine = null;
                                         }
                                     } else {
-                                        byte var71 = -1;
-                                        switch(var69.hashCode()) {
-                                        case -1249586564:
-                                            if(var69.equals("variable")) {
-                                                var71 = 1;
-                                            }
-                                            break;
-                                        case -903579675:
-                                            if(var69.equals("shader")) {
-                                                var71 = 0;
-                                            }
-                                        }
-
-                                        switch(var71) {
-                                        case 0:
-                                            var62.addReplaceAction("materials_3.xml", "Effect=\"" + line + '\"', "Effect=\"\"");
-                                            break;
-                                        case 1:
-                                            v = SPACE_PATTERN.split(line);
-                                            var62.addReplaceAction("materials_3.xml", "Variable=\"" + v[0] + "\" Default=\"" + v[1] + '\"', "Variable=\"" + v[0] + "\" Default=\"" + v[2] + '\"');
-                                            break;
-                                        default:
-                                            System.err.println("Unkown action " + var69 + " is set.");
-                                        }
+										switch(type) {
+											case "shader":
+												var62.addReplaceAction("materials_3.xml", "Effect=\"" + line + '\"', "Effect=\"\"");
+												break;
+											case "variable":
+												v = SPACE_PATTERN.split(line);
+												var62.addReplaceAction("materials_3.xml", "Variable=\"" + v[0] + "\" Default=\"" + v[1] + '\"', "Variable=\"" + v[0] + "\" Default=\"" + v[2] + '\"');
+												break;
+											default:
+												System.err.println("Unkown action " + type + " is set.");
+										}
                                     }
                                 }
                             }
                         }
 
-                        if(var70 != null) {
-                            System.err.println("Dangling replace: from still set to " + var70);
+                        if(previousLine != null) {
+                            System.err.println("Dangling replace: from still set to " + previousLine);
                         }
                     } catch (Throwable var54) {
                         var68 = var54;
                         throw var54;
                     } finally {
-                        if(var67 != null) {
+                        if(effectsReader != null) {
                             if(var68 != null) {
                                 try {
-                                    var67.close();
+                                    effectsReader.close();
                                 } catch (Throwable var52) {
                                     var68.addSuppressed(var52);
                                 }
                             } else {
-                                var67.close();
+                                effectsReader.close();
                             }
                         }
 

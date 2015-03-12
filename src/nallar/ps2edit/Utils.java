@@ -20,9 +20,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 public class Utils {
     private static final String cachedProcesses = getProcesses();
 
-    public Utils() {
-    }
-
     public static boolean replaceWithoutModified(File file, String f, String t) throws IOException {
         if(f.length() != t.length()) {
             throw new RuntimeException("Mismatched lengths");
@@ -44,7 +41,7 @@ public class Utils {
     }
 
     public static void removeRecursive(Path path) throws IOException {
-        java.nio.file.Files.walkFileTree(path, new SimpleFileVisitor() {
+        java.nio.file.Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 java.nio.file.Files.delete(file);
                 return FileVisitResult.CONTINUE;
