@@ -18,15 +18,45 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
-	private final static String[] ps2Dirs = new String[]{
-			"C:\\Steam\\SteamApps\\common\\PlanetSide 2",
-			"C:\\Program Files (x86)\\Steam\\SteamApps\\common\\PlanetSide 2",
-			"C:\\Program Files\\Steam\\SteamApps\\common\\PlanetSide 2"
-	};
+	private final static File propertiesFile = new File("./ps2.props");
+	private final static Properties properties;
+
+	static {
+		properties = new Properties();
+		if (propertiesFile.exists()) {
+			try {
+				properties.load(new FileInputStream(propertiesFile));
+			} catch (IOException e) {
+				throw Throw.sneaky(e);
+			}
+		} else {
+			properties.put("ps2dir", "");
+		}
+	}
+
+	private static String[] getPS2dirs() {
+		ArrayList<String> dirs = new ArrayList<>();
+		dirs.add(properties.getProperty("directory"));
+		dirs.addAll(Arrays.asList(
+				"C:\\Steam\\SteamApps\\common\\PlanetSide 2",
+				"C:\\Program Files (x86)\\Steam\\SteamApps\\common\\PlanetSide 2",
+				"C:\\Program Files\\Steam\\SteamApps\\common\\PlanetSide 2"
+		));
+		if (!propertiesFile.exists()) {
+			try {
+				properties.store(new FileOutputStream(propertiesFile), "");
+			} catch (IOException e) {
+				throw Throw.sneaky(e);
+			}
+		}
+		return dirs.toArray(new String[dirs.size()]);
+	}
+
 	private static boolean START_GAME = false;
 	private static final Pattern SPACE_PATTERN = Pattern.compile(" ");
 	private static final Pattern COMMA_PATTERN = Pattern.compile(",");
@@ -44,20 +74,7 @@ public class Main {
 	private volatile boolean shouldPatch = true;
 
 	public Main() {
-		File triedPs2Dir = null;
-
-		for (String replacementFilePathPath : ps2Dirs) {
-			triedPs2Dir = new File(replacementFilePathPath);
-			if (triedPs2Dir.exists() && triedPs2Dir.isDirectory() && new File(triedPs2Dir, "PlanetSide2.exe").exists()) {
-				break;
-			}
-
-			triedPs2Dir = null;
-		}
-		if (triedPs2Dir == null) {
-			throw new RuntimeException("Failed to find PS2 dir in one of: " + Arrays.toString(ps2Dirs));
-		}
-		ps2Dir = triedPs2Dir;
+		ps2Dir = getPS2dir();
 		assetsDir = new File(ps2Dir, "Resources" + File.separator + "Assets");
 		replacementsDir = new File(ps2Dir, "backup");
 		replacementFilePathPath = new File(replacementsDir, "replacementFilePath");
@@ -146,6 +163,23 @@ public class Main {
 			Thread.sleep((long) (s * 1000.0D));
 		} catch (InterruptedException ignored) {
 		}
+	}
+
+	private File getPS2dir() {
+		File triedPs2Dir = null;
+		String[] dirs = getPS2dirs();
+		for (String replacementFilePathPath : dirs) {
+			triedPs2Dir = new File(replacementFilePathPath);
+			if (triedPs2Dir.exists() && triedPs2Dir.isDirectory() && new File(triedPs2Dir, "PlanetSide2.exe").exists()) {
+				break;
+			}
+
+			triedPs2Dir = null;
+		}
+		if (triedPs2Dir == null) {
+			throw new RuntimeException("Failed to find PS2 dir in one of: " + Arrays.toString(dirs));
+		}
+		return triedPs2Dir;
 	}
 
 	private static final String original = "[CrashReporter]\r\nAddress=ps2recap.station.sony.com:15081\r\n";

@@ -17,6 +17,7 @@ public class Throw {
 		throw Throw.<RuntimeException>throwIgnoreCheckedErasure(throwable);
 	}
 
+	@SuppressWarnings("unchecked")
 	private static <T extends Throwable> RuntimeException throwIgnoreCheckedErasure(Throwable toThrow) throws T {
 		throw (T) toThrow;
 	}
