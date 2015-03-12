@@ -63,20 +63,20 @@ public class Main {
 	private static final Pattern RANGE_PATTERN = Pattern.compile("\\{([0-9]+)\\- ?([0-9]+)}");
 	private static long lastTime = System.nanoTime();
 
-	final File cCLLP;
 	final File ps2Dir;
 	final File assetsDir;
 	final File replacementsDir;
 	final File replacementFilePathPath;
 	final File downloadInfo;
 	final File logsDirectory;
+	final File cCLLP;
 	private Thread checkShouldPatch;
 	private volatile boolean shouldPatch = true;
 
 	public Main() {
 		ps2Dir = getPS2dir();
 		assetsDir = new File(ps2Dir, "Resources" + File.separator + "Assets");
-		replacementsDir = new File(ps2Dir, "backup");
+		replacementsDir = new File("./replacements");
 		replacementFilePathPath = new File(replacementsDir, "replacementFilePath");
 		downloadInfo = new File(ps2Dir, ".DownloadInfo.txt");
 		logsDirectory = new File(ps2Dir, "Logs");
