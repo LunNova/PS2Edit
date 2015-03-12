@@ -109,7 +109,6 @@ public class Main {
 		boolean waitForSteamToBeSlowAndRealisePS2HasExited = Utils.kill("wws_crashreport_uploader.exe") || Utils.kill("Launchpad.exe") || Utils.kill("AwesomiumProcess.exe") || Utils.kill("Planetside2.exe");
 		profile("Killing PS2 tasks");
 
-
 		if (downloadInfo.exists() && !downloadInfo.delete()) {
 			throw new RuntimeException("Failed to delete old downloadInfo");
 		}
@@ -209,10 +208,8 @@ public class Main {
 
 		profile("Adding assets_replace actions");
 		File effectsFile = new File(replacementsDir, "effects.yml");
-		BufferedReader effectsReader = new BufferedReader(new FileReader(effectsFile));
-		Throwable var68 = null;
 
-		try {
+		try (BufferedReader effectsReader = new BufferedReader(new FileReader(effectsFile))) {
 			String type = null;
 			entry = null;
 			String previousLine = null;
@@ -225,7 +222,6 @@ public class Main {
 						type = line.substring(0, line.length() - 1);
 						entry = type.contains(".") ? type : null;
 					} else {
-						String[] v;
 						if (entry != null) {
 							if (previousLine == null) {
 								previousLine = line;
@@ -238,11 +234,8 @@ public class Main {
 								}
 
 								ArrayList<String> entriesList = new ArrayList<>();
-								v = entries;
-								int e = entries.length;
 
-								for (int i$1 = 0; i$1 < e; ++i$1) {
-									String e1 = v[i$1];
+								for (String e1 : entries) {
 									Matcher matcher = RANGE_PATTERN.matcher(e1);
 									if (matcher.find()) {
 										int f = Integer.valueOf(matcher.group(1));
@@ -269,8 +262,8 @@ public class Main {
 									var62.addReplaceAction("materials_3.xml", "Effect=\"" + line + '\"', "Effect=\"\"");
 									break;
 								case "variable":
-									v = SPACE_PATTERN.split(line);
-									var62.addReplaceAction("materials_3.xml", "Variable=\"" + v[0] + "\" Default=\"" + v[1] + '\"', "Variable=\"" + v[0] + "\" Default=\"" + v[2] + '\"');
+									String[] parts = SPACE_PATTERN.split(line);
+									var62.addReplaceAction("materials_3.xml", "Variable=\"" + parts[0] + "\" Default=\"" + parts[1] + '\"', "Variable=\"" + parts[0] + "\" Default=\"" + parts[2] + '\"');
 									break;
 								default:
 									System.err.println("Unkown action " + type + " is set.");
@@ -283,22 +276,6 @@ public class Main {
 			if (previousLine != null) {
 				System.err.println("Dangling replace: from still set to " + previousLine);
 			}
-		} catch (Throwable var54) {
-			var68 = var54;
-			throw var54;
-		} finally {
-			if (effectsReader != null) {
-				if (var68 != null) {
-					try {
-						effectsReader.close();
-					} catch (Throwable var52) {
-						var68.addSuppressed(var52);
-					}
-				} else {
-					effectsReader.close();
-				}
-			}
-
 		}
 
 		profile("Adding effects.yml actions");
@@ -316,11 +293,8 @@ public class Main {
 		for (boolean launcherReady = false; !launcherReady; sleep(0.4D)) {
 			try {
 				FileInputStream assets = new FileInputStream(downloadInfo);
-				Throwable fonts = null;
 
-				try {
-					BufferedReader repFile = new BufferedReader(new InputStreamReader(assets));
-
+				try (BufferedReader repFile = new BufferedReader(new InputStreamReader(assets))) {
 					String br;
 					while ((br = repFile.readLine()) != null) {
 						if (br.contains("All files are up to date")) {
@@ -335,17 +309,8 @@ public class Main {
 							break;
 						}
 					}
-				} catch (Throwable e) {
+				} catch (IOException e) {
 					throw Throw.sneaky(e);
-				} finally {
-					if (assets != null) {
-						try {
-							assets.close();
-						} catch (Throwable var53) {
-							fonts.addSuppressed(var53);
-						}
-					}
-
 				}
 			} catch (FileNotFoundException ignored) {
 				// Launcher hasn't even started logging yet.
