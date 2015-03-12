@@ -8,6 +8,8 @@ package nallar.ps2edit;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
+import nallar.ps2edit.util.Throw;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -20,23 +22,27 @@ import java.nio.file.attribute.BasicFileAttributes;
 public class Utils {
     private static final String cachedProcesses = getProcesses();
 
-    public static boolean replaceWithoutModified(File file, String f, String t) throws IOException {
+    public static boolean replaceWithoutModified(File file, String f, String t) {
         if(f.length() != t.length()) {
             throw new RuntimeException("Mismatched lengths");
         } else {
-            String content = Files.toString(file, Charsets.UTF_8);
-            if(!content.contains(f)) {
-                return false;
-            } else {
-                content = content.replace(f, t);
-                long lastModified = file.lastModified();
-                Files.write(content, file, Charsets.UTF_8);
-                if(!file.setLastModified(lastModified)) {
-                    throw new RuntimeException("Failed to unmark file " + f + " as modified.");
-                } else {
-                    return true;
-                }
-            }
+			try {
+				String content = Files.toString(file, Charsets.UTF_8);
+				if (!content.contains(f)) {
+					return false;
+				} else {
+					content = content.replace(f, t);
+					long lastModified = file.lastModified();
+					Files.write(content, file, Charsets.UTF_8);
+					if (!file.setLastModified(lastModified)) {
+						throw new RuntimeException("Failed to unmark file " + f + " as modified.");
+					} else {
+						return true;
+					}
+				}
+			} catch(IOException e) {
+				throw Throw.sneaky(e);
+			}
         }
     }
 
