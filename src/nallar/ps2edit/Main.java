@@ -8,9 +8,7 @@ package nallar.ps2edit;
 import com.google.common.base.Throwables;
 import nallar.ps2edit.util.Throw;
 
-import java.awt.*;
 import java.io.*;
-import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,12 +21,30 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
-	private final static File propertiesFile = new File("./ps2.props");
-	private final static Properties properties;
+	private static boolean START_GAME = true;
+	private static final File propertiesFile = new File("./ps2.props");
+	private static final Properties properties;
+	private static final Pattern SPACE_PATTERN = Pattern.compile(" ");
+	private static final Pattern COMMA_PATTERN = Pattern.compile(",");
+	private static final Pattern RANGE_PATTERN = Pattern.compile("\\{([0-9]+)\\- ?([0-9]+)}");
+	private static final String CLIENT_CONFIG = "ClientConfigTestLaunchpad.ini";
+	private static long lastTime = System.nanoTime();
+
+	final File ps2Dir;
+	final File assetsDir;
+	final File replacementsDir;
+	final File replacementFilePathPath;
+	final File downloadInfo;
+	final File logsDirectory;
+	final File clientConfig;
+	final File launchpadExe;
+	private Thread checkShouldPatch;
+	private volatile boolean shouldPatch = true;
 
 	static {
 		properties = new Properties();
 		if (propertiesFile.exists()) {
+			System.out.println("Loading props");
 			try {
 				properties.load(new FileInputStream(propertiesFile));
 			} catch (IOException e) {
@@ -37,11 +53,12 @@ public class Main {
 		} else {
 			properties.put("ps2dir", "");
 		}
+		System.out.println(properties.get("ps2dir"));
 	}
 
 	private static String[] getPS2dirs() {
 		ArrayList<String> dirs = new ArrayList<>();
-		dirs.add(properties.getProperty("directory"));
+		dirs.add(properties.getProperty("ps2dir"));
 		dirs.addAll(Arrays.asList(
 				"C:\\Steam\\SteamApps\\common\\PlanetSide 2",
 				"C:\\Program Files (x86)\\Steam\\SteamApps\\common\\PlanetSide 2",
@@ -57,22 +74,6 @@ public class Main {
 		return dirs.toArray(new String[dirs.size()]);
 	}
 
-	private static boolean START_GAME = false;
-	private static final Pattern SPACE_PATTERN = Pattern.compile(" ");
-	private static final Pattern COMMA_PATTERN = Pattern.compile(",");
-	private static final Pattern RANGE_PATTERN = Pattern.compile("\\{([0-9]+)\\- ?([0-9]+)}");
-	private static long lastTime = System.nanoTime();
-
-	final File ps2Dir;
-	final File assetsDir;
-	final File replacementsDir;
-	final File replacementFilePathPath;
-	final File downloadInfo;
-	final File logsDirectory;
-	final File cCLLP;
-	private Thread checkShouldPatch;
-	private volatile boolean shouldPatch = true;
-
 	public Main() {
 		ps2Dir = getPS2dir();
 		assetsDir = new File(ps2Dir, "Resources" + File.separator + "Assets");
@@ -80,7 +81,11 @@ public class Main {
 		replacementFilePathPath = new File(replacementsDir, "replacementFilePath");
 		downloadInfo = new File(ps2Dir, ".DownloadInfo.txt");
 		logsDirectory = new File(ps2Dir, "Logs");
-		cCLLP = new File(ps2Dir, "ClientConfigLiveLaunchpad.ini");
+		clientConfig = new File(ps2Dir, CLIENT_CONFIG);
+		launchpadExe = new File(ps2Dir, "launchpad.exe");
+		if (!clientConfig.exists()) {
+			throw new RuntimeException("Client test launchpad config not found. PS2 Patcher only works on the test server!");
+		}
 	}
 
 	public static void main(String[] args) {
@@ -92,12 +97,15 @@ public class Main {
 		} finally {
 			sleep(START_GAME ? 30.0D : 180.0D);
 		}
-
 	}
 
 	private void runGameWithPatches() throws IOException {
 		checkShouldPatch();
-		boolean waitForSteamToBeSlowAndRealisePS2HasExited = Utils.kill("wws_crashreport_uploader.exe") || Utils.kill("Launchpad.exe") || Utils.kill("AwesomiumProcess.exe") || Utils.kill("Planetside2.exe");
+		boolean ps2WasRunning =
+				Utils.kill("wws_crashreport_uploader.exe") |
+						Utils.kill("Launchpad.exe") |
+						Utils.kill("AwesomiumProcess.exe") |
+						Utils.kill("Planetside2.exe");
 		profile("Killing PS2 tasks");
 
 		if (downloadInfo.exists() && !downloadInfo.delete()) {
@@ -108,20 +116,20 @@ public class Main {
 			System.out.println("Cleaned up PS2 logs directory");
 		}
 
-		if (waitForSteamToBeSlowAndRealisePS2HasExited) {
+		if (ps2WasRunning) {
 			sleep(3.0D);
 			lastTime = System.nanoTime();
 		}
 
 		Assets.deleteReplacement(replacementFilePathPath);
-
 		profile("Deleting old replacement pack file");
 
 		modifyCCLLP();
-
 		profile("Reverting ClientConfigLiveLaunchpad changes");
+
 		if (START_GAME) {
-			Desktop.getDesktop().browse(URI.create("steam://run/218230"));
+			// Desktop.getDesktop().browse(URI.create("steam://run/218230"));
+			Runtime.getRuntime().exec(new String[]{launchpadExe.toString()});
 			profile("Starting game");
 			sleep(3.5D);
 		}
@@ -135,7 +143,7 @@ public class Main {
 
 		lastTime = System.nanoTime();
 		revertCCLLP();
-		profile("Updated cCLLP");
+		profile("Updated clientConfig");
 		final Assets assets = new Assets(assetsDir, replacementFilePathPath);
 		profile("Loading " + assets.getNumFiles() + " from assets");
 		profile("Replacing " + replaceFonts() + " fonts");
@@ -182,6 +190,7 @@ public class Main {
 		if (triedPs2Dir == null) {
 			throw new RuntimeException("Failed to find PS2 dir in one of: " + Arrays.toString(dirs));
 		}
+		System.out.println("Selected PS2 dir: " + triedPs2Dir + " available: " + Arrays.toString(dirs));
 		return triedPs2Dir;
 	}
 
@@ -189,14 +198,14 @@ public class Main {
 	private static final String modified = "[CrashReporter]\r\nAddress=ation.tony.com:15081\r\nEnabled=0\r\n";
 
 	private void revertCCLLP() {
-		if (!Utils.replaceWithoutModified(cCLLP, original, modified)) {
+		if (!Utils.replaceWithoutModified(clientConfig, original, modified)) {
 			throw new RuntimeException("Failed to update cCLP.ini, missing search string " + original);
 		}
 	}
 
 	private void modifyCCLLP() {
-		if (!Utils.replaceWithoutModified(cCLLP, modified, original)) {
-			System.err.println("cCLLP.ini not already modified, can\'t revert.");
+		if (!Utils.replaceWithoutModified(clientConfig, modified, original)) {
+			System.err.println("clientConfig.ini not already modified, can\'t revert.");
 		}
 	}
 
@@ -246,7 +255,7 @@ public class Main {
 
 			String line;
 			while ((line = effectsReader.readLine()) != null) {
-				if (!line.trim().isEmpty() && (line.length() == 0 || line.charAt(0) != 35)) {
+				if (!line.trim().isEmpty() && line.charAt(0) != '#') {
 					line = line.replace("\t", "").replace("\\t", "\t");
 					if (line.length() > 0 && line.charAt(line.length() - 1) == ':') {
 						type = line.substring(0, line.length() - 1);
@@ -310,9 +319,13 @@ public class Main {
 	}
 
 	private int replaceFonts() {
+		File fontsDir = new File(replacementsDir, "fonts");
+		if (!fontsDir.isDirectory()) {
+			return 0;
+		}
 		final int[] foundFonts = new int[1];
 		try {
-			Files.walkFileTree((new File(replacementsDir, "fonts")).toPath(), new SimpleFileVisitor<Path>() {
+			Files.walkFileTree(fontsDir.toPath(), new SimpleFileVisitor<Path>() {
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 					super.visitFile(file, attrs);
 					File original = new File(ps2Dir, "UI/Resource/Fonts/" + file.getFileName());

@@ -1,3 +1,3 @@
-Some rubbish tools for editing planetside 2 stuff.
+PS2 Patching tool.
 
-Decompiled, I lost the source code. Sorry for lack of comments and weird switch statement decompilation. Might fix it later.
+For use only on the PTS environment. Probably broken in some way, and you might even get banned for using it on the PTS so you probably shouldn't. meh.
