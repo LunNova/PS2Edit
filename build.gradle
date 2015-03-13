@@ -37,6 +37,9 @@ sourceSets {
         java {
             srcDir 'src'
         }
+        resources {
+            srcDir 'resources'
+        }
     }
 }
 
@@ -54,6 +57,9 @@ jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from((configurations.runtime - configurations.provided).filter{it.exists()}.collect { it.isDirectory() ? it : zipTree(it) }) {
         exclude "META-INF/**"
+    }
+    manifest {
+        attributes 'Main-Class': 'nallar.ps2edit.Main'
     }
 }
 

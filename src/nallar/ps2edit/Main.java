@@ -168,8 +168,11 @@ public class Main {
 	private File getPS2dir() {
 		File triedPs2Dir = null;
 		String[] dirs = getPS2dirs();
-		for (String replacementFilePathPath : dirs) {
-			triedPs2Dir = new File(replacementFilePathPath);
+		for (String possibleDir : dirs) {
+			if (possibleDir == null) {
+				continue;
+			}
+			triedPs2Dir = new File(possibleDir);
 			if (triedPs2Dir.exists() && triedPs2Dir.isDirectory() && new File(triedPs2Dir, "PlanetSide2.exe").exists()) {
 				break;
 			}
@@ -363,7 +366,6 @@ public class Main {
 	@SuppressWarnings("deprecation")
 	private boolean checkShouldPatchEnd() {
 		checkShouldPatch.interrupt();
-		checkShouldPatch.stop(new Throwable("stop patch"));
 		checkShouldPatch.stop();
 		return shouldPatch;
 	}
@@ -377,7 +379,11 @@ public class Main {
 					BufferedReader ignored = new BufferedReader(new InputStreamReader(System.in));
 
 					while (!ignored.ready()) {
-						Main.sleep(0.2D);
+						try {
+							Thread.sleep(400);
+						} catch (InterruptedException e) {
+							return;
+						}
 					}
 
 					ignored.readLine();
