@@ -304,7 +304,7 @@ public class Main {
 								assets.addReplaceAction("materials_3.xml", "Variable=\"" + parts[0] + "\" Default=\"" + parts[1] + '\"', "Variable=\"" + parts[0] + "\" Default=\"" + parts[2] + '\"');
 								break;
 							default:
-								System.err.println("Unkown action " + type + " is set.");
+								System.err.println("Unknown action " + type + " is set.");
 						}
 					} else {
 						throw new RuntimeException("Unknown state. Line: '" + line + "'");

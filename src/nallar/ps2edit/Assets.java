@@ -19,13 +19,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class Assets {
-	final Map<String, Entry> nameToOrig = new HashMap<>('?');
+	final Map<String, Entry> nameToOrig = new HashMap<>(60);
 	final Map<Integer, ArrayList<Runnable>> packToActionList = new HashMap<>(60);
 	final ArrayList<PackFile> packFiles = new ArrayList<>(256);
 	final Map<String, byte[]> nameToReplacement = new HashMap<>(60);
 	final PackFile replacementPackFile;
 
 	public static void deleteReplacement(File replacementFilePathPath) {
+		// replacementFilePathPath is the path to a file, which contains a single line of text:
+		// the path of the replacement pack file
 		if (!replacementFilePathPath.exists()) {
 			System.out.println("Replacement pack file does not exist, no need to delete it.");
 			return;
@@ -137,17 +139,11 @@ public class Assets {
 
 	public void save() {
 		for (Map.Entry<Integer, ArrayList<Runnable>> integerArrayListEntry : this.packToActionList.entrySet()) {
-			Map.Entry<Integer, ArrayList<Runnable>> entry;
-			entry = integerArrayListEntry;
-			int name = entry.getKey();
-			ArrayList<Runnable> replacement = entry.getValue();
-			PackFile e = this.packFiles.get(name);
+			ArrayList<Runnable> replacements = integerArrayListEntry.getValue();
+			PackFile e = this.packFiles.get(integerArrayListEntry.getKey());
 			e.openRead();
 
-			for (Object aReplacement : replacement) {
-				Runnable runnable = (Runnable) aReplacement;
-				runnable.run();
-			}
+			replacements.forEach(Runnable::run);
 
 			e.close();
 		}
@@ -155,10 +151,7 @@ public class Assets {
 		this.replacementPackFile.open();
 
 		for (Map.Entry<String, byte[]> entry : this.nameToReplacement.entrySet()) {
-			String name1 = entry.getKey();
-			byte[] replacement1 = entry.getValue();
-			Entry e1 = this.replacementPackFile.addFile(name1);
-			e1.setData(replacement1);
+			replacementPackFile.addFile(entry.getKey()).setData(entry.getValue());
 		}
 
 		this.replacementPackFile.closeForce();
