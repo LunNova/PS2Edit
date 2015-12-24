@@ -59,7 +59,7 @@ public class Patcher {
 			lastTime = System.nanoTime();
 		}
 
-		Assets.deleteReplacement(path.replacementFilePathPath);
+		Assets.deleteReplacement(path);
 		profile("Deleting old replacement pack file");
 
 		revertCCLP();
@@ -82,7 +82,7 @@ public class Patcher {
 		lastTime = System.nanoTime();
 		modifyCCLP();
 		profile("Updated clientConfig");
-		final Assets assets = new Assets(path.assetsDir, path.replacementFilePathPath);
+		final Assets assets = new Assets(path, true);
 		profile("Loading " + assets.getNumFiles() + " from assets");
 		profile("Replacing " + replaceFonts() + " fonts");
 		loadReplacements(assets);

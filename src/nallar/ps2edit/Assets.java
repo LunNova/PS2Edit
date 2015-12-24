@@ -10,13 +10,10 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import nallar.ps2edit.PackFile.Entry;
 import nallar.ps2edit.util.Throw;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class Assets {
 	final Map<String, Entry> nameToOrig = new HashMap<>(60);
@@ -25,39 +22,27 @@ public class Assets {
 	final Map<String, byte[]> nameToReplacement = new HashMap<>(60);
 	final PackFile replacementPackFile;
 
-	public static void deleteReplacement(File replacementFilePathPath) {
-		// replacementFilePathPath is the path to a file, which contains a single line of text:
-		// the path of the replacement pack file
-		if (!replacementFilePathPath.exists()) {
+	public static void deleteReplacement(Paths path) {
+		Path replacementFilePath = path.getReplacementPackFile();
+		if (replacementFilePath == null) {
 			System.out.println("Replacement pack file does not exist, no need to delete it.");
 			return;
 		}
-		File original;
-		try {
-			original = new File(new String(Files.readAllBytes(replacementFilePathPath.toPath()), Charsets.UTF_8));
-		} catch (IOException e) {
-			throw Throw.sneaky(e);
-		}
+		File original = replacementFilePath.toFile();
 		if (original.exists() && !original.delete()) {
 			System.err.println("Failed to delete replacement pack file.");
 			Uninterruptibles.sleepUninterruptibly(5, TimeUnit.SECONDS);
 			if (original.exists() && !original.delete()) {
-				replacementFilePathPath.deleteOnExit();
 				original.deleteOnExit();
 				throw Throw.sneaky(new IOException("Failed to delete replacement pack file"));
 			}
 		}
-		if (!replacementFilePathPath.delete()) {
-			System.err.println("Failed to delete replacement pack path file.");
-			Uninterruptibles.sleepUninterruptibly(5, TimeUnit.SECONDS);
-			if (replacementFilePathPath.exists() && !replacementFilePathPath.delete()) {
-				replacementFilePathPath.deleteOnExit();
-				throw Throw.sneaky(new IOException("Failed to delete replacement pack path file"));
-			}
-		}
+		path.setReplacementPackFile(null);
 	}
 
-	public Assets(File packFileDir, File replacementFilePathPath) throws IOException {
+	public Assets(Paths path, boolean writable) throws IOException {
+		File packFileDir = path.assetsDir;
+
 		int fakePackFileNumber = 0;
 
 		File replacementPackFile;
@@ -70,10 +55,10 @@ public class Assets {
 			throw new RuntimeException("Replacement pack file should not already exist at this stage." +
 					"Should have been deleted earlier or errored at failed deletion.");
 		}
-		Files.write(replacementFilePathPath.toPath(), replacementPackFile.toString().getBytes(Charsets.UTF_8));
+		path.setReplacementPackFile(replacementPackFile.toPath().toAbsolutePath());
 		Uninterruptibles.sleepUninterruptibly(1L, TimeUnit.MILLISECONDS);
 
-		this.replacementPackFile = new PackFile(replacementPackFile);
+		this.replacementPackFile = writable ? new PackFile(replacementPackFile) : null;
 
 		for (int i = 0; i < fakePackFileNumber; ++i) {
 			PackFile pack = new PackFile(new File(packFileDir, String.format("Assets_%03d.pack", i)));
@@ -138,6 +123,9 @@ public class Assets {
 	}
 
 	public void save() {
+		if (replacementPackFile == null)
+			throw new Error("Can't save Assets if created with writable=false");
+
 		for (Map.Entry<Integer, ArrayList<Runnable>> integerArrayListEntry : this.packToActionList.entrySet()) {
 			ArrayList<Runnable> replacements = integerArrayListEntry.getValue();
 			PackFile e = this.packFiles.get(integerArrayListEntry.getKey());
