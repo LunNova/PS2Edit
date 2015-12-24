@@ -62,7 +62,7 @@ public class Patcher {
 		Assets.deleteReplacement(path.replacementFilePathPath);
 		profile("Deleting old replacement pack file");
 
-		modifyCCLP();
+		revertCCLP();
 		profile("Reverting ClientConfigLiveLaunchpad changes");
 
 		if (START_GAME) {
@@ -80,7 +80,7 @@ public class Patcher {
 		}
 
 		lastTime = System.nanoTime();
-		revertCCLP();
+		modifyCCLP();
 		profile("Updated clientConfig");
 		final Assets assets = new Assets(path.assetsDir, path.replacementFilePathPath);
 		profile("Loading " + assets.getNumFiles() + " from assets");
@@ -114,13 +114,13 @@ public class Patcher {
 	private static final String original = "[CrashReporter]\r\nAddress=ps2recap.station.sony.com:15081\r\n";
 	private static final String modified = "[CrashReporter]\r\nAddress=ation.tony.com:15081\r\nEnabled=0\r\n";
 
-	private void revertCCLP() {
+	private void modifyCCLP() {
 		if (!Utils.replaceWithoutModified(path.clientConfig, original, modified)) {
 			throw new RuntimeException("Failed to update cCLP.ini, missing search string " + original);
 		}
 	}
 
-	private void modifyCCLP() {
+	private void revertCCLP() {
 		if (!Utils.replaceWithoutModified(path.clientConfig, modified, original)) {
 			System.err.println("clientConfig.ini not already modified, can\'t revert.");
 		}
