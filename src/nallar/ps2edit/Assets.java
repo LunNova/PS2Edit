@@ -56,10 +56,16 @@ public class Assets {
 			throw new RuntimeException("Replacement pack file should not already exist at this stage." +
 					"Should have been deleted earlier or errored at failed deletion.");
 		}
-		path.setReplacementPackFile(replacementPackFile.toPath().toAbsolutePath());
-		Uninterruptibles.sleepUninterruptibly(1L, TimeUnit.MILLISECONDS);
 
-		this.replacementPackFile = writable ? new PackFile(replacementPackFile) : null;
+		if (writable) {
+			path.setReplacementPackFile(replacementPackFile.toPath().toAbsolutePath());
+			Uninterruptibles.sleepUninterruptibly(1L, TimeUnit.MILLISECONDS);
+
+			this.replacementPackFile = new PackFile(replacementPackFile);
+		} else {
+			this.replacementPackFile = null;
+		}
+
 
 		for (int i = 0; i < fakePackFileNumber; ++i) {
 			PackFile pack = new PackFile(new File(packFileDir, String.format("Assets_%03d.pack", i)));

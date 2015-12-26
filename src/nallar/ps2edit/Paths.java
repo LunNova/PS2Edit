@@ -11,7 +11,7 @@ public class Paths {
 	private static final String LAUNCHPAD_EXECUTABLE = "launchpad.exe";
 	private static final String PLANETSIDE2_EXECUTABLE = "PlanetSide2_x64.exe";
 	private final File propertiesFile = new File("./ps2.props");
-	private final File propertiesFileBackup = new File("./ps2.props");
+	private final File propertiesFileBackup = new File("./ps2.props.backup");
 	private final Properties properties;
 	public final File ps2Dir;
 	public final File assetsDir;
@@ -34,7 +34,6 @@ public class Paths {
 			properties.put("ps2dir", "");
 			saveProperties();
 		}
-		System.out.println(properties.get("ps2dir"));
 
 		ps2Dir = getPS2dir();
 		assetsDir = new File(ps2Dir, "Resources" + File.separator + "Assets");
