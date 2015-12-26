@@ -51,6 +51,7 @@ configurations {
 
 dependencies {
     compile 'com.google.guava:guava:18.0'
+    compile 'org.projectlombok:lombok:1.16.6'
 }
 
 jar {

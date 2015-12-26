@@ -7,6 +7,7 @@ package nallar.ps2edit;
 
 import com.google.common.base.Charsets;
 import com.google.common.util.concurrent.Uninterruptibles;
+import lombok.val;
 import nallar.ps2edit.PackFile.Entry;
 import nallar.ps2edit.util.Throw;
 
@@ -66,11 +67,32 @@ public class Assets {
 			this.packFiles.add(pack);
 		}
 
+		sanityCheck();
+
+	}
+
+	private void sanityCheck() {
+		Map<String, PackFile.Entry> files = new HashMap<>();
+		for (PackFile packFile : packFiles) {
+			for (val entry : packFile.entryMap.entrySet()) {
+				if (files.put(entry.getKey(), entry.getValue()) != null) {
+					throw new RuntimeException("Duplicate entry in pack files: " + entry.getKey());
+				}
+			}
+		}
 	}
 
 	public byte[] getByteData(String file) {
 		byte[] rep = this.nameToReplacement.get(file);
 		return rep != null ? rep : this.nameToOrig.get(file).getData();
+	}
+
+	public Map<String, PackFile.Entry> getFiles() {
+		Map<String, PackFile.Entry> files = new HashMap<>();
+		for (PackFile packFile : packFiles) {
+			files.putAll(packFile.entryMap);
+		}
+		return files;
 	}
 
 	public void setByteData(String file, byte[] data) {
