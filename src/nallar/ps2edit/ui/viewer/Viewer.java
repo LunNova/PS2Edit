@@ -1,5 +1,6 @@
 package nallar.ps2edit.ui.viewer;
 
+import com.google.common.html.HtmlEscapers;
 import lombok.val;
 import nallar.ps2edit.Assets;
 import nallar.ps2edit.PackFile;
@@ -7,15 +8,16 @@ import nallar.ps2edit.Paths;
 import nallar.ps2edit.util.Throw;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.io.*;
+import java.util.*;
 
 public class Viewer {
-	private JTextField textField1;
-	private JList list;
+	private JTextField searchField;
+	private JList<String> list;
 	private JPanel panel;
+	private JLabel label;
 	private final Map<String, PackFile.Entry> assetsMap;
 	private final List<String> assetsList;
 	private final Paths path;
@@ -30,13 +32,94 @@ public class Viewer {
 		}
 		assetsMap = assets.getFiles();
 		assetsList = new ArrayList<>(assetsMap.keySet());
+		Collections.sort(assetsList);
+		list.addListSelectionListener((e) -> {
+			if (!e.getValueIsAdjusting())
+				updateSelection();
+		});
+		searchField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				change();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				change();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				change();
+			}
+
+			private void change() {
+				List<String> strings = searchAssets(searchField.getText());
+				list.setListData(strings.toArray(new String[strings.size()]));
+			}
+		});
 	}
 
-	private void searchAssets(String search) {
+	private List<String> searchAssets(String search) {
+		if (search.isEmpty())
+			return getReplacements();
+
+		search = search.toLowerCase();
 		val results = new ArrayList<String>();
 		for (String asset : assetsList) {
-			results.add(asset);
+			if (asset.toLowerCase().contains(search))
+				results.add(asset);
 		}
+
+		return results.size() > 25000 ? results.subList(0, 25000) : results;
+	}
+
+	private List<String> getReplacements() {
+		val list = path.replacementsDir.list();
+		return list == null ? Collections.emptyList() : Arrays.asList(list);
+	}
+
+	private void updateSelection() {
+		val selected = list.getSelectedValue();
+		val entry = assetsMap.get(selected);
+
+		if (entry == null)
+			return;
+
+		entry.getPackFile().openRead();
+
+		try {
+
+			if (isTextDocument(selected)) {
+				label.setText(convertStringForLabel(entry.getStringData()));
+			} else {
+				label.setText("Can not preview this file type");
+			}
+		} finally {
+			entry.getPackFile().close();
+		}
+	}
+
+	private static String convertStringForLabel(String stringData) {
+		stringData = HtmlEscapers.htmlEscaper().escape(stringData);
+		stringData = stringData.replace("\r\n", "<br>");
+		stringData = stringData.replace("\n", "<br>");
+		return "<html>" + stringData + "</html>";
+	}
+
+	private static boolean isTextDocument(String name) {
+		val i = name.lastIndexOf('.');
+		if (i == -1)
+			return false;
+		val type = name.substring(i + 1, name.length());
+		switch (type) {
+			case "xml":
+			case "txt":
+			case "cfg":
+			case "ini":
+				return true;
+		}
+		return false;
 	}
 
 	private void createUIComponents() {

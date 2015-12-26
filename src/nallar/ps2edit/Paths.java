@@ -8,16 +8,18 @@ import java.util.*;
 
 public class Paths {
 	private static final String CLIENT_CONFIG = "ClientConfigTestLaunchpad.ini";
+	private static final String LAUNCHPAD_EXECUTABLE = "launchpad.exe";
+	private static final String PLANETSIDE2_EXECUTABLE = "PlanetSide2_x64.exe";
 	private final File propertiesFile = new File("./ps2.props");
 	private final File propertiesFileBackup = new File("./ps2.props");
 	private final Properties properties;
-	final File ps2Dir;
-	final File assetsDir;
-	final File replacementsDir;
-	final File downloadInfo;
-	final File logsDirectory;
-	final File clientConfig;
-	final File launchpadExe;
+	public final File ps2Dir;
+	public final File assetsDir;
+	public final File replacementsDir;
+	public final File downloadInfo;
+	public final File logsDirectory;
+	public final File clientConfig;
+	public final File launchpadExe;
 
 	public Paths() {
 		properties = new Properties();
@@ -40,7 +42,7 @@ public class Paths {
 		downloadInfo = new File(ps2Dir, ".DownloadInfo.txt");
 		logsDirectory = new File(ps2Dir, "Logs");
 		clientConfig = new File(ps2Dir, CLIENT_CONFIG);
-		launchpadExe = new File(ps2Dir, "launchpad.exe");
+		launchpadExe = new File(ps2Dir, LAUNCHPAD_EXECUTABLE);
 		if (!clientConfig.exists()) {
 			throw new RuntimeException("Client test launchpad config not found. PS2 Patcher only works on the test server!");
 		}
@@ -109,7 +111,7 @@ public class Paths {
 				continue;
 			}
 			triedPs2Dir = new File(possibleDir);
-			if (triedPs2Dir.exists() && triedPs2Dir.isDirectory() && new File(triedPs2Dir, "PlanetSide2.exe").exists()) {
+			if (triedPs2Dir.exists() && triedPs2Dir.isDirectory() && new File(triedPs2Dir, PLANETSIDE2_EXECUTABLE).exists()) {
 				break;
 			}
 
