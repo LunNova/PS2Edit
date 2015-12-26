@@ -2,6 +2,7 @@ package nallar.ps2edit.ui.viewer;
 
 import com.google.common.html.HtmlEscapers;
 import lombok.val;
+import me.nallar.jdds.JDDS;
 import nallar.ps2edit.Assets;
 import nallar.ps2edit.PackFile;
 import nallar.ps2edit.Paths;
@@ -18,6 +19,8 @@ public class Viewer {
 	private JList<String> list;
 	private JPanel panel;
 	private JLabel label;
+	private JScrollPane leftScrollPane;
+	private JScrollPane rightScrollPane;
 	private final Map<String, PackFile.Entry> assetsMap;
 	private final List<String> assetsList;
 	private final Paths path;
@@ -58,6 +61,8 @@ public class Viewer {
 				list.setListData(strings.toArray(new String[strings.size()]));
 			}
 		});
+		leftScrollPane.getVerticalScrollBar().setUnitIncrement(20);
+		rightScrollPane.getVerticalScrollBar().setUnitIncrement(20);
 	}
 
 	private List<String> searchAssets(String search) {
@@ -88,12 +93,25 @@ public class Viewer {
 
 		entry.getPackFile().openRead();
 
+		val i = selected.lastIndexOf('.');
+		val type = selected.substring(i + 1, selected.length());
+		label.setText(null);
+		label.setIcon(null);
 		try {
-
-			if (isTextDocument(selected)) {
-				label.setText(convertStringForLabel(entry.getStringData()));
-			} else {
-				label.setText("Can not preview this file type");
+			switch (type) {
+				case "xml":
+				case "txt":
+				case "cfg":
+				case "ini":
+					// plain text
+					label.setText(convertStringForLabel(entry.getStringData()));
+					break;
+				case "dds":
+					// compressed DDS image
+					label.setIcon(new ImageIcon(JDDS.readDDS(entry.getData())));
+					break;
+				default:
+					label.setText("Can not preview this file type");
 			}
 		} finally {
 			entry.getPackFile().close();
@@ -105,21 +123,6 @@ public class Viewer {
 		stringData = stringData.replace("\r\n", "<br>");
 		stringData = stringData.replace("\n", "<br>");
 		return "<html>" + stringData + "</html>";
-	}
-
-	private static boolean isTextDocument(String name) {
-		val i = name.lastIndexOf('.');
-		if (i == -1)
-			return false;
-		val type = name.substring(i + 1, name.length());
-		switch (type) {
-			case "xml":
-			case "txt":
-			case "cfg":
-			case "ini":
-				return true;
-		}
-		return false;
 	}
 
 	private void createUIComponents() {

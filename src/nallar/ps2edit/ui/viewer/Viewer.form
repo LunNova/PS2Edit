@@ -17,10 +17,11 @@
         <properties>
           <continuousLayout value="false"/>
           <enabled value="true"/>
+          <resizeWeight value="0.2"/>
         </properties>
         <border type="none"/>
         <children>
-          <scrollpane id="5b8eb">
+          <scrollpane id="5b8eb" binding="rightScrollPane">
             <constraints>
               <splitpane position="left"/>
             </constraints>
@@ -35,14 +36,21 @@
               </component>
             </children>
           </scrollpane>
-          <component id="ab25f" class="javax.swing.JLabel" binding="label">
+          <scrollpane id="7f6b8" binding="leftScrollPane">
             <constraints>
               <splitpane position="right"/>
             </constraints>
-            <properties>
-              <text value=""/>
-            </properties>
-          </component>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="ab25f" class="javax.swing.JLabel" binding="label">
+                <constraints/>
+                <properties>
+                  <text value=""/>
+                </properties>
+              </component>
+            </children>
+          </scrollpane>
         </children>
       </splitpane>
       <component id="d8d3d" class="javax.swing.JTextField" binding="searchField" default-binding="true">

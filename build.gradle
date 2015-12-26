@@ -30,6 +30,7 @@ tasks.withType(JavaCompile) {
 
 repositories {
     mavenCentral()
+    maven { url 'http://repo.nallar.me/' }
 }
 
 sourceSets {
@@ -49,9 +50,15 @@ configurations {
     compile.extendsFrom provided
 }
 
+configurations.all {
+    // only cache changing dependencies for 1 minute
+    resolutionStrategy.cacheChangingModulesFor 60, 'seconds'
+}
+
 dependencies {
     compile 'com.google.guava:guava:18.0'
     compile 'org.projectlombok:lombok:1.16.6'
+    compile group: 'me.nallar', name: 'jdds', version: '1.0-SNAPSHOT', changing: true
 }
 
 jar {
