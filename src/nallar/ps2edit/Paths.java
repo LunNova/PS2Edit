@@ -11,7 +11,7 @@ import java.util.*;
 
 public class Paths {
 	private static final String CLIENT_CONFIG = "ClientConfigTestLaunchpad.ini";
-	private static final String LAUNCHPAD_EXECUTABLE = "launchpad.exe";
+	private static final String LAUNCHPAD_EXECUTABLE = "LaunchPad.exe";
 	private static final String PLANETSIDE2_EXECUTABLE = "PlanetSide2_x64.exe";
 	private static final String PROPERTIES_FILE = "./ps2.props";
 	public final File ps2Dir;

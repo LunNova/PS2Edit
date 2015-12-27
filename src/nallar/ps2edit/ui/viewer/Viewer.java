@@ -73,6 +73,9 @@ public class Viewer {
 	}
 
 	private static String convertStringForLabel(String stringData) {
+		if (stringData.length() > 100000) {
+			stringData = stringData.substring(0, 100000);
+		}
 		stringData = HtmlEscapers.htmlEscaper().escape(stringData);
 		stringData = stringData.replace("\r\n", "<br>");
 		stringData = stringData.replace("\n", "<br>");

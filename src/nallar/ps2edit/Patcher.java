@@ -8,7 +8,6 @@ package nallar.ps2edit;
 import com.google.common.base.Throwables;
 import nallar.ps2edit.util.Throw;
 
-import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
@@ -81,12 +80,12 @@ public class Patcher {
 		profile("Deleting old replacement pack file");
 
 		revertCCLP();
-		profile("Reverting ClientConfigLiveLaunchpad changes");
+		profile("Reverting ClientConfigLaunchpad changes");
 
 		if (START_GAME) {
 			// Desktop.getDesktop().browse(URI.create("steam://run/218230"));
-			Desktop.getDesktop().open(path.launchpadExe);
-			// Runtime.getRuntime().exec(new String[]{path.launchpadExe.toString()});
+			System.out.println("Launching: " + path.launchpadExe);
+			Runtime.getRuntime().exec(new String[] {"C:\\windows\\explorer.exe", path.launchpadExe.getCanonicalPath()}, null, path.launchpadExe.getParentFile());
 			profile("Starting game");
 			sleep(3.5D);
 		}
