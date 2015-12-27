@@ -20,6 +20,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.List;
+import java.util.regex.*;
 
 public class Viewer {
 	private final Map<String, PackFile.Entry> assetsMap;
@@ -110,9 +111,24 @@ public class Viewer {
 
 		search = search.toLowerCase();
 		val results = new ArrayList<String>();
-		for (String asset : assetsList) {
-			if (asset.toLowerCase().contains(search))
-				results.add(asset);
+
+		boolean plainSearch = false;
+		try {
+			val regex = Pattern.compile(search);
+			for (String asset : assetsList) {
+				if (regex.matcher(asset).find())
+					results.add(asset);
+			}
+		} catch (PatternSyntaxException e) {
+			plainSearch = true;
+		}
+
+		if (plainSearch) {
+			System.out.println("Plain search for: " + search);
+			for (String asset : assetsList) {
+				if (asset.contains(search))
+					results.add(asset);
+			}
 		}
 
 		return results.size() > 25000 ? results.subList(0, 25000) : results;
