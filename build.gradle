@@ -67,7 +67,7 @@ jar {
         exclude "META-INF/**"
     }
     manifest {
-        attributes 'Main-Class': 'nallar.ps2edit.Main'
+        attributes 'Main-Class': 'nallar.ps2edit.ui.viewer.Viewer'
     }
 }
 
