@@ -58,6 +58,7 @@ configurations.all {
 dependencies {
     compile 'com.google.guava:guava:18.0'
     compile 'org.projectlombok:lombok:1.16.6'
+    compile 'com.intellij:forms_rt:7.0.3'
     compile group: 'me.nallar', name: 'jdds', version: '1.0-SNAPSHOT', changing: true
 }
 

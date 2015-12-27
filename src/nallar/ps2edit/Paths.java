@@ -1,7 +1,10 @@
 package nallar.ps2edit;
 
+import lombok.val;
 import nallar.ps2edit.util.Throw;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -103,23 +106,57 @@ public class Paths {
 	}
 
 	private File getPS2dir() {
-		File triedPs2Dir = null;
 		String[] dirs = getPS2dirs();
+		File chosenDir = null;
 		for (String possibleDir : dirs) {
 			if (possibleDir == null) {
 				continue;
 			}
-			triedPs2Dir = new File(possibleDir);
-			if (triedPs2Dir.exists() && triedPs2Dir.isDirectory() && new File(triedPs2Dir, PLANETSIDE2_EXECUTABLE).exists()) {
+
+			File triedPs2Dir = new File(possibleDir);
+			if (validPS2Dir(triedPs2Dir))
+				chosenDir = triedPs2Dir;
 				break;
+		}
+		if (chosenDir == null) {
+			chosenDir = guiSelectPS2Dir();
+			if (chosenDir == null)
+				throw new RuntimeException("Failed to find PS2 dir in one of: " + Arrays.toString(dirs));
+		}
+		System.out.println("Selected PS2 dir: " + chosenDir + " available: " + Arrays.toString(dirs));
+		return chosenDir;
+	}
+
+	private File guiSelectPS2Dir() {
+		val currentSelection = new File(properties.getProperty("ps2dir"));
+		val chooser = new JFileChooser();
+		chooser.setCurrentDirectory(currentSelection.isDirectory() ? currentSelection : new File("/"));
+		chooser.setDialogTitle("Select your Planetside2_x64.exe");
+		chooser.setFileFilter(new FileFilter() {
+			@Override
+			public boolean accept(File f) {
+				return f.isDirectory() || f.getName().toLowerCase().equals(PLANETSIDE2_EXECUTABLE.toLowerCase());
 			}
 
-			triedPs2Dir = null;
+			@Override
+			public String getDescription() {
+				return PLANETSIDE2_EXECUTABLE;
+			}
+		});
+
+		int result = chooser.showOpenDialog(null);
+		if (result == JFileChooser.APPROVE_OPTION) {
+			File selected = chooser.getSelectedFile().getParentFile().getAbsoluteFile();
+			if (validPS2Dir(selected)) {
+				properties.setProperty("ps2dir", selected.toString());
+				saveProperties();
+				return selected;
+			}
 		}
-		if (triedPs2Dir == null) {
-			throw new RuntimeException("Failed to find PS2 dir in one of: " + Arrays.toString(dirs));
-		}
-		System.out.println("Selected PS2 dir: " + triedPs2Dir + " available: " + Arrays.toString(dirs));
-		return triedPs2Dir;
+		return null;
+	}
+
+	private boolean validPS2Dir(File triedPs2Dir) {
+		return triedPs2Dir.exists() && triedPs2Dir.isDirectory() && new File(triedPs2Dir, PLANETSIDE2_EXECUTABLE).exists();
 	}
 }
