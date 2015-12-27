@@ -11,8 +11,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.nio.*;
 
 public class DMEFile {
 	private static final DMEFile.vector t = new DMEFile.vector();

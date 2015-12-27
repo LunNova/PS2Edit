@@ -7,16 +7,12 @@ package nallar.ps2edit;
 
 import sun.nio.ch.DirectBuffer;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel.MapMode;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.zip.CRC32;
+import java.io.*;
+import java.nio.*;
+import java.nio.channels.FileChannel.*;
+import java.nio.charset.*;
+import java.util.*;
+import java.util.zip.*;
 
 public class PackFile {
 	private static final int MAX_HEADER_SIZE = 2050;
