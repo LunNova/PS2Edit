@@ -166,7 +166,8 @@ public class Paths {
 	}
 
 	private boolean validPS2Dir(File triedPs2Dir) {
-		System.out.println(triedPs2Dir);
-		return triedPs2Dir.exists() && triedPs2Dir.isDirectory() && new File(triedPs2Dir, PLANETSIDE2_EXECUTABLE).exists();
+		return triedPs2Dir.exists() && triedPs2Dir.isDirectory()
+				&& new File(triedPs2Dir, PLANETSIDE2_EXECUTABLE).exists()
+				&& new File(triedPs2Dir, CLIENT_CONFIG).exists();
 	}
 }

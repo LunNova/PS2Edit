@@ -7,6 +7,7 @@ import lombok.val;
 import me.nallar.jdds.JDDS;
 import nallar.ps2edit.Assets;
 import nallar.ps2edit.PackFile;
+import nallar.ps2edit.Patcher;
 import nallar.ps2edit.Paths;
 import nallar.ps2edit.util.Throw;
 
@@ -25,6 +26,7 @@ public class Viewer {
 	private final List<String> assetsList;
 	private final Paths path;
 	private final Assets assets;
+	private final Console console;
 	private JTextField searchField;
 	private JList<String> list;
 	private JPanel panel;
@@ -41,7 +43,8 @@ public class Viewer {
 		$$$setupUI$$$();
 	}
 
-	public Viewer() {
+	public Viewer(Console console) {
+		this.console = console;
 		path = new Paths();
 		assets = new Assets(path, false);
 		assetsMap = assets.getFiles();
@@ -71,6 +74,9 @@ public class Viewer {
 		leftScrollPane.getVerticalScrollBar().setUnitIncrement(20);
 		rightScrollPane.getVerticalScrollBar().setUnitIncrement(20);
 		handleSearch();
+		patchAndRunButton.addActionListener(e -> {
+			launchGame();
+		});
 	}
 
 	private static String convertStringForLabel(String stringData) {
@@ -81,11 +87,20 @@ public class Viewer {
 	}
 
 	public static void main(String[] args) {
+		val console = Console.create();
+
 		JFrame frame = new JFrame("Viewer");
-		frame.setContentPane(new Viewer().panel);
+		frame.setContentPane(new Viewer(console).panel);
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
+	}
+
+	private void launchGame() {
+		new Thread(() -> {
+			console.panel.grabFocus();
+			Patcher.main(path);
+		}).start();
 	}
 
 	private void handleSearch() {
@@ -177,7 +192,7 @@ public class Viewer {
 		panel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
 		searchField = new JTextField();
 		searchField.setToolTipText("File Search");
-		panel.add(searchField, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+		panel.add(searchField, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(400, -1), null, 0, false));
 		patchAndRunButton = new JButton();
 		patchAndRunButton.setText("Patch and Run");
 		panel.add(patchAndRunButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -185,7 +200,7 @@ public class Viewer {
 		splitPane.setContinuousLayout(false);
 		splitPane.setEnabled(true);
 		splitPane.setResizeWeight(0.2);
-		panel.add(splitPane, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200), null, 0, false));
+		panel.add(splitPane, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(500, 500), null, 0, false));
 		rightScrollPane = new JScrollPane();
 		splitPane.setLeftComponent(rightScrollPane);
 		list = new JList();

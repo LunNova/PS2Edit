@@ -245,6 +245,10 @@ public class PackFile {
 			}
 		}
 
+		public void setData(String data) {
+			this.setData(data.getBytes(PackFile.charset));
+		}
+
 		public void setData(byte[] data) {
 			if (Arrays.equals(data, this.lastData)) {
 				System.err.println("Updated " + this.name + " with matching cached data - ignoring.");
@@ -268,10 +272,6 @@ public class PackFile {
 					this.writeEntry();
 				}
 			}
-		}
-
-		public void setData(String data) {
-			this.setData(data.getBytes(PackFile.charset));
 		}
 
 		public byte[] getData(int from, int length) {

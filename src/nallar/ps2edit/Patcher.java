@@ -22,13 +22,17 @@ public class Patcher {
 	private static final String modified = "[CrashReporter]\r\nAddress=ation.tony.com:15081\r\nEnabled=0\r\n";
 	private static final boolean START_GAME = false;
 	private static long lastTime = System.nanoTime();
-	private final Paths path = new Paths();
+	private final Paths path;
 	private Thread checkShouldPatch;
 	private volatile boolean shouldPatch = true;
 
-	public static void main(String[] args) {
+	public Patcher(Paths path) {
+		this.path = path;
+	}
+
+	public static void main(Paths path) {
 		try {
-			new Patcher().runGameWithPatches();
+			new Patcher(path).runGameWithPatches();
 		} catch (Throwable var5) {
 			var5.printStackTrace(System.err);
 			sleep(100.0D);
@@ -161,6 +165,11 @@ public class Patcher {
 
 	private void loadEffects(Assets assets) throws IOException {
 		File effectsFile = new File(path.replacementsDir, "effects.yml");
+
+		if (!effectsFile.exists()) {
+			System.out.println("Skipping effects");
+			return;
+		}
 
 		try (BufferedReader effectsReader = new BufferedReader(new FileReader(effectsFile))) {
 			String type = null;

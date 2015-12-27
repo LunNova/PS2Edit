@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class Assets {
+	private static final int EXPECTED_REPLACEMENT_PACK_FILE_ID = 257;
 	final Map<String, Entry> nameToOrig = new HashMap<>(60);
 	final Map<Integer, ArrayList<Runnable>> packToActionList = new HashMap<>(60);
 	final ArrayList<PackFile> packFiles = new ArrayList<>(256);
@@ -28,16 +29,18 @@ public class Assets {
 
 		int fakePackFileNumber = 0;
 
+		Path storedReplacementPath = path.getReplacementPackFile();
+		File storedReplacement = storedReplacementPath == null ? null : storedReplacementPath.toAbsolutePath().toFile();
+
 		File replacementPackFile;
 		do {
 			replacementPackFile = new File(packFileDir, String.format("Assets_%03d.pack", fakePackFileNumber++));
-		} while (replacementPackFile.exists());
+		} while (replacementPackFile.exists() && !replacementPackFile.equals(storedReplacement));
 		--fakePackFileNumber;
+
+		if (fakePackFileNumber > EXPECTED_REPLACEMENT_PACK_FILE_ID)
+			throw new RuntimeException("Replacement pack file ID " + fakePackFileNumber + " higher than expected " + EXPECTED_REPLACEMENT_PACK_FILE_ID);
 		replacementPackFile = new File(packFileDir, String.format("Assets_%03d.pack", fakePackFileNumber));
-		if (replacementPackFile.exists()) {
-			throw new RuntimeException("Replacement pack file should not already exist at this stage." +
-					"Should have been deleted earlier or errored at failed deletion.");
-		}
 
 		if (writable) {
 			path.setReplacementPackFile(replacementPackFile.toPath().toAbsolutePath());
@@ -79,10 +82,22 @@ public class Assets {
 
 	private void sanityCheck() {
 		Map<String, PackFile.Entry> files = new HashMap<>();
+		int i = 0;
 		for (PackFile packFile : packFiles) {
+			i++;
 			for (val entry : packFile.entryMap.entrySet()) {
 				if (files.put(entry.getKey(), entry.getValue()) != null) {
-					throw new RuntimeException("Duplicate entry in pack files: " + entry.getKey());
+					if (i == EXPECTED_REPLACEMENT_PACK_FILE_ID) {
+						// Assuming this is the replacement pack file
+						packFile.file.delete();
+						packFile.file.deleteOnExit();
+						if (replacementPackFile != null) {
+							replacementPackFile.file.delete();
+							replacementPackFile.file.deleteOnExit();
+						}
+						throw new RuntimeException("Replacement pack file not deleted properly, please try again.");
+					}
+					throw new RuntimeException("Duplicate entry in pack file " + i + ": " + entry.getKey());
 				}
 			}
 		}
