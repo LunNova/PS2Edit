@@ -15,16 +15,16 @@ import java.util.*;
 import java.util.regex.*;
 
 public class Patcher {
-	private static boolean START_GAME = false;
 	private static final Pattern SPACE_PATTERN = Pattern.compile(" ");
 	private static final Pattern COMMA_PATTERN = Pattern.compile(",");
 	private static final Pattern RANGE_PATTERN = Pattern.compile("\\{([0-9]+)\\- ?([0-9]+)}");
+	private static final String original = "[CrashReporter]\r\nAddress=ps2recap.station.sony.com:15081\r\n";
+	private static final String modified = "[CrashReporter]\r\nAddress=ation.tony.com:15081\r\nEnabled=0\r\n";
+	private static boolean START_GAME = false;
 	private static long lastTime = System.nanoTime();
-
+	private final Paths path = new Paths();
 	private Thread checkShouldPatch;
 	private volatile boolean shouldPatch = true;
-
-	private final Paths path = new Paths();
 
 	public static void main(String[] args) {
 		try {
@@ -34,6 +34,19 @@ public class Patcher {
 			sleep(100.0D);
 		} finally {
 			sleep(START_GAME ? 30.0D : 180.0D);
+		}
+	}
+
+	private static long profile(String partDone) {
+		long newTime = System.nanoTime();
+		System.out.println(partDone + " took " + (float) (newTime - lastTime) / 1.0E9F + " seconds.");
+		return lastTime = System.nanoTime();
+	}
+
+	static void sleep(double s) {
+		try {
+			Thread.sleep((long) (s * 1000.0D));
+		} catch (InterruptedException ignored) {
 		}
 	}
 
@@ -97,22 +110,6 @@ public class Patcher {
 		System.out.println("Updated " + assets.getNumFilesUpdated() + " entries.");
 
 	}
-
-	private static long profile(String partDone) {
-		long newTime = System.nanoTime();
-		System.out.println(partDone + " took " + (float) (newTime - lastTime) / 1.0E9F + " seconds.");
-		return lastTime = System.nanoTime();
-	}
-
-	static void sleep(double s) {
-		try {
-			Thread.sleep((long) (s * 1000.0D));
-		} catch (InterruptedException ignored) {
-		}
-	}
-
-	private static final String original = "[CrashReporter]\r\nAddress=ps2recap.station.sony.com:15081\r\n";
-	private static final String modified = "[CrashReporter]\r\nAddress=ation.tony.com:15081\r\nEnabled=0\r\n";
 
 	private void modifyCCLP() {
 		if (!Utils.replaceWithoutModified(path.clientConfig, original, modified)) {

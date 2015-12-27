@@ -23,24 +23,6 @@ public class Assets {
 	final Map<String, byte[]> nameToReplacement = new HashMap<>(60);
 	final PackFile replacementPackFile;
 
-	public static void deleteReplacement(Paths path) {
-		Path replacementFilePath = path.getReplacementPackFile();
-		if (replacementFilePath == null) {
-			System.out.println("Replacement pack file does not exist, no need to delete it.");
-			return;
-		}
-		File original = replacementFilePath.toFile();
-		if (original.exists() && !original.delete()) {
-			System.err.println("Failed to delete replacement pack file.");
-			Uninterruptibles.sleepUninterruptibly(5, TimeUnit.SECONDS);
-			if (original.exists() && !original.delete()) {
-				original.deleteOnExit();
-				throw Throw.sneaky(new IOException("Failed to delete replacement pack file"));
-			}
-		}
-		path.setReplacementPackFile(null);
-	}
-
 	public Assets(Paths path, boolean writable) throws IOException {
 		File packFileDir = path.assetsDir;
 
@@ -75,6 +57,24 @@ public class Assets {
 
 		sanityCheck();
 
+	}
+
+	public static void deleteReplacement(Paths path) {
+		Path replacementFilePath = path.getReplacementPackFile();
+		if (replacementFilePath == null) {
+			System.out.println("Replacement pack file does not exist, no need to delete it.");
+			return;
+		}
+		File original = replacementFilePath.toFile();
+		if (original.exists() && !original.delete()) {
+			System.err.println("Failed to delete replacement pack file.");
+			Uninterruptibles.sleepUninterruptibly(5, TimeUnit.SECONDS);
+			if (original.exists() && !original.delete()) {
+				original.deleteOnExit();
+				throw Throw.sneaky(new IOException("Failed to delete replacement pack file"));
+			}
+		}
+		path.setReplacementPackFile(null);
 	}
 
 	private void sanityCheck() {

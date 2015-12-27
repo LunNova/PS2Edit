@@ -209,10 +209,10 @@ public class DMEFile {
 	}
 
 	private static class vector {
+		private static final Splitter splitter = Splitter.on(' ');
 		public float x;
 		public float y;
 		public float z;
-		private static final Splitter splitter = Splitter.on(' ');
 
 		public vector() {
 		}

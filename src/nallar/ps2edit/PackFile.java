@@ -213,11 +213,11 @@ public class PackFile {
 	}
 
 	public class Entry {
-		int entryOffset;
 		public String name;
+		public int crc;
+		int entryOffset;
 		int dataOffset;
 		int dataSize;
-		public int crc;
 		int offsetOffsetSizeCrc;
 		int maxSize;
 		private byte[] lastData;
@@ -247,6 +247,10 @@ public class PackFile {
 				PackFile.this.f.get(data);
 				return data;
 			}
+		}
+
+		public void setData(String data) {
+			this.setData(data.getBytes(PackFile.charset));
 		}
 
 		public byte[] getData(int from, int length) {
@@ -283,10 +287,6 @@ public class PackFile {
 					this.writeEntry();
 				}
 			}
-		}
-
-		public void setData(String data) {
-			this.setData(data.getBytes(PackFile.charset));
 		}
 
 		public void writeEntryFullyAtCurrentPosition() {

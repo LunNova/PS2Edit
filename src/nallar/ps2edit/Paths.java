@@ -14,8 +14,6 @@ public class Paths {
 	private static final String LAUNCHPAD_EXECUTABLE = "launchpad.exe";
 	private static final String PLANETSIDE2_EXECUTABLE = "PlanetSide2_x64.exe";
 	private static final String PROPERTIES_FILE = "./ps2.props";
-	private final Properties properties;
-	private final File propertiesFile;
 	public final File ps2Dir;
 	public final File assetsDir;
 	public final File replacementsDir;
@@ -23,6 +21,8 @@ public class Paths {
 	public final File logsDirectory;
 	public final File clientConfig;
 	public final File launchpadExe;
+	private final Properties properties;
+	private final File propertiesFile;
 
 	public Paths() {
 		properties = new Properties();
