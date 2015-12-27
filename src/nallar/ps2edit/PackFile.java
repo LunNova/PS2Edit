@@ -233,10 +233,6 @@ public class PackFile {
 			return new String(this.getData(), PackFile.charset);
 		}
 
-		public PackFile packFile() {
-			return PackFile.this;
-		}
-
 		public byte[] getData() {
 			if (this.lastData != null) {
 				return this.lastData;

@@ -129,6 +129,8 @@ public class DMEFile {
 	}
 
 	private static void debug(String s) {
+		if (false)
+			System.out.println(s);
 	}
 
 	public static void saveMesh(byte[] data, File objFile) throws IOException {
@@ -274,11 +276,6 @@ public class DMEFile {
 
 		public String toString() {
 			return this.x + "\t" + this.y + '\t' + this.z;
-		}
-	}
-
-	private static class Mesh {
-		private Mesh() {
 		}
 	}
 }

@@ -20,7 +20,7 @@ public class Patcher {
 	private static final Pattern RANGE_PATTERN = Pattern.compile("\\{([0-9]+)\\- ?([0-9]+)}");
 	private static final String original = "[CrashReporter]\r\nAddress=ps2recap.station.sony.com:15081\r\n";
 	private static final String modified = "[CrashReporter]\r\nAddress=ation.tony.com:15081\r\nEnabled=0\r\n";
-	private static boolean START_GAME = false;
+	private static final boolean START_GAME = false;
 	private static long lastTime = System.nanoTime();
 	private final Paths path = new Paths();
 	private Thread checkShouldPatch;

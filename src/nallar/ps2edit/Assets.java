@@ -23,7 +23,7 @@ public class Assets {
 	final Map<String, byte[]> nameToReplacement = new HashMap<>(60);
 	final PackFile replacementPackFile;
 
-	public Assets(Paths path, boolean writable) throws IOException {
+	public Assets(Paths path, boolean writable) {
 		File packFileDir = path.assetsDir;
 
 		int fakePackFileNumber = 0;

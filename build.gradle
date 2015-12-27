@@ -1,8 +1,13 @@
+//Some warnings suppressed due to incorrect IDEA behaviour
+//See IDEA-141744
+
 apply plugin: 'java'
 apply plugin: 'maven'
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+tasks.withType(JavaCompile) {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}
 
 version = '1.0-SNAPSHOT'
 group = 'me.nallar'
@@ -38,6 +43,7 @@ sourceSets {
         java {
             srcDir 'src'
         }
+        //noinspection GroovyAssignabilityCheck
         resources {
             srcDir 'resources'
         }
@@ -50,9 +56,10 @@ configurations {
     compile.extendsFrom provided
 }
 
+//noinspection GroovyAssignabilityCheck
 configurations.all {
     // only cache changing dependencies for 1 minute
-    resolutionStrategy.cacheChangingModulesFor 60, 'seconds'
+    resolutionStrategy { cacheChangingModulesFor 60, 'seconds' }
 }
 
 dependencies {
