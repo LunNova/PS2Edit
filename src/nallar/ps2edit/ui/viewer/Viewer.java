@@ -139,7 +139,7 @@ public class Viewer {
 			return;
 
 		val i = selected.lastIndexOf('.');
-		val type = selected.substring(i + 1, selected.length());
+		val type = selected.substring(i + 1, selected.length()).toLowerCase();
 		label.setText(null);
 		label.setIcon(null);
 
