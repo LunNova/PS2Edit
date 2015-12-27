@@ -249,30 +249,34 @@ public class Viewer {
 			this.menu = new JPopupMenu();
 
 			addMenuItem("Edit", (e) -> {
-				String selectedFile = list.getSelectedValue();
-				PackFile.Entry asset = assetsMap.get(selectedFile);
 
-				if (asset == null) {
-					return;
-				}
+				List<String> selectedFiles = list.getSelectedValuesList();
 
-				File replacement = new File(path.replacementsDir, selectedFile);
-				if (!replacement.exists()) {
-					asset.getPackFile().openRead();
-					try {
-						byte[] data = asset.getData();
-						Files.write(replacement.toPath(), data);
-					} catch (IOException e1) {
-						throw Throw.sneaky(e1);
-					} finally {
-						asset.getPackFile().close();
+				for (String selectedFile : selectedFiles) {
+					PackFile.Entry asset = assetsMap.get(selectedFile);
+
+					if (asset == null) {
+						continue;
 					}
-				}
-				if (Desktop.isDesktopSupported()) {
-					try {
-						Desktop.getDesktop().open(path.replacementsDir);
-					} catch (IOException e1) {
-						throw Throw.sneaky(e1);
+
+					File replacement = new File(path.replacementsDir, selectedFile);
+					if (!replacement.exists()) {
+						asset.getPackFile().openRead();
+						try {
+							byte[] data = asset.getData();
+							Files.write(replacement.toPath(), data);
+						} catch (IOException e1) {
+							throw Throw.sneaky(e1);
+						} finally {
+							asset.getPackFile().close();
+						}
+					}
+					if (Desktop.isDesktopSupported()) {
+						try {
+							Desktop.getDesktop().open(path.replacementsDir);
+						} catch (IOException e1) {
+							throw Throw.sneaky(e1);
+						}
 					}
 				}
 			});
