@@ -13,9 +13,9 @@ public class Paths {
 	private static final String CLIENT_CONFIG = "ClientConfigTestLaunchpad.ini";
 	private static final String LAUNCHPAD_EXECUTABLE = "launchpad.exe";
 	private static final String PLANETSIDE2_EXECUTABLE = "PlanetSide2_x64.exe";
-	private final File propertiesFile = new File("./ps2.props");
-	private final File propertiesFileBackup = new File("./ps2.props.backup");
+	private static final String PROPERTIES_FILE = "./ps2.props";
 	private final Properties properties;
+	private final File propertiesFile;
 	public final File ps2Dir;
 	public final File assetsDir;
 	public final File replacementsDir;
@@ -26,6 +26,15 @@ public class Paths {
 
 	public Paths() {
 		properties = new Properties();
+		replacementsDir = new File("./PS2 Patches");
+		if (!replacementsDir.isDirectory())
+			try {
+				Files.createDirectory(replacementsDir.toPath());
+			} catch (IOException e) {
+				throw Throw.sneaky(e);
+			}
+
+		propertiesFile = new File(replacementsDir, PROPERTIES_FILE);
 		if (propertiesFile.exists()) {
 			System.out.println("Loading props");
 			try {
@@ -40,7 +49,6 @@ public class Paths {
 
 		ps2Dir = getPS2dir();
 		assetsDir = new File(ps2Dir, "Resources" + File.separator + "Assets");
-		replacementsDir = new File("./replacements");
 		downloadInfo = new File(ps2Dir, ".DownloadInfo.txt");
 		logsDirectory = new File(ps2Dir, "Logs");
 		clientConfig = new File(ps2Dir, CLIENT_CONFIG);
@@ -70,6 +78,7 @@ public class Paths {
 	}
 
 	private void saveProperties() {
+		File propertiesFileBackup = new File(propertiesFile.getParent(), propertiesFile.getName() + ".bak");
 		try {
 			if (propertiesFile.exists()) {
 				Files.deleteIfExists(propertiesFileBackup.toPath());
@@ -94,7 +103,9 @@ public class Paths {
 
 	private String[] getPS2dirs() {
 		ArrayList<String> dirs = new ArrayList<>();
-		dirs.add(properties.getProperty("ps2dir"));
+		val config = properties.getProperty("ps2dir");
+		if (config != null && !config.isEmpty())
+			dirs.add(config);
 		dirs.addAll(Arrays.asList(
 				"C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\PlanetSide 2 Test",
 				"C:\\PS2\\PTS",
@@ -107,16 +118,14 @@ public class Paths {
 
 	private File getPS2dir() {
 		String[] dirs = getPS2dirs();
+		System.out.println(Arrays.toString(dirs));
 		File chosenDir = null;
 		for (String possibleDir : dirs) {
-			if (possibleDir == null) {
-				continue;
-			}
-
 			File triedPs2Dir = new File(possibleDir);
-			if (validPS2Dir(triedPs2Dir))
+			if (validPS2Dir(triedPs2Dir)) {
 				chosenDir = triedPs2Dir;
 				break;
+			}
 		}
 		if (chosenDir == null) {
 			chosenDir = guiSelectPS2Dir();
@@ -131,7 +140,7 @@ public class Paths {
 		val currentSelection = new File(properties.getProperty("ps2dir"));
 		val chooser = new JFileChooser();
 		chooser.setCurrentDirectory(currentSelection.isDirectory() ? currentSelection : new File("/"));
-		chooser.setDialogTitle("Select your Planetside2_x64.exe");
+		chooser.setDialogTitle("Select your PTS Planetside2_x64.exe");
 		chooser.setFileFilter(new FileFilter() {
 			@Override
 			public boolean accept(File f) {
@@ -157,6 +166,7 @@ public class Paths {
 	}
 
 	private boolean validPS2Dir(File triedPs2Dir) {
+		System.out.println(triedPs2Dir);
 		return triedPs2Dir.exists() && triedPs2Dir.isDirectory() && new File(triedPs2Dir, PLANETSIDE2_EXECUTABLE).exists();
 	}
 }
