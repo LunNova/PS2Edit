@@ -8,6 +8,7 @@ package nallar.ps2edit;
 import com.google.common.base.Throwables;
 import nallar.ps2edit.util.Throw;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
@@ -20,7 +21,7 @@ public class Patcher {
 	private static final Pattern RANGE_PATTERN = Pattern.compile("\\{([0-9]+)\\- ?([0-9]+)}");
 	private static final String original = "[CrashReporter]\r\nAddress=ps2recap.station.sony.com:15081\r\n";
 	private static final String modified = "[CrashReporter]\r\nAddress=ation.tony.com:15081\r\nEnabled=0\r\n";
-	private static final boolean START_GAME = false;
+	private static final boolean START_GAME = true;
 	private static long lastTime = System.nanoTime();
 	private final Paths path;
 	private Thread checkShouldPatch;
@@ -84,7 +85,8 @@ public class Patcher {
 
 		if (START_GAME) {
 			// Desktop.getDesktop().browse(URI.create("steam://run/218230"));
-			Runtime.getRuntime().exec(new String[]{path.launchpadExe.toString()});
+			Desktop.getDesktop().open(path.launchpadExe);
+			// Runtime.getRuntime().exec(new String[]{path.launchpadExe.toString()});
 			profile("Starting game");
 			sleep(3.5D);
 		}
