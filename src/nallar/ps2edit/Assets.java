@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class Assets {
-	private static final int EXPECTED_REPLACEMENT_PACK_FILE_ID = 257;
+	private static final int EXPECTED_REPLACEMENT_PACK_FILE_ID = 256;
 	final Map<String, Entry> nameToOrig = new HashMap<>(60);
 	final Map<Integer, ArrayList<Runnable>> packToActionList = new HashMap<>(60);
 	final ArrayList<PackFile> packFiles = new ArrayList<>(256);
@@ -84,7 +84,6 @@ public class Assets {
 		Map<String, PackFile.Entry> files = new HashMap<>();
 		int i = 0;
 		for (PackFile packFile : packFiles) {
-			i++;
 			for (val entry : packFile.entryMap.entrySet()) {
 				if (files.put(entry.getKey(), entry.getValue()) != null) {
 					if (i == EXPECTED_REPLACEMENT_PACK_FILE_ID) {
@@ -100,6 +99,7 @@ public class Assets {
 					throw new RuntimeException("Duplicate entry in pack file " + i + ": " + entry.getKey());
 				}
 			}
+			i++;
 		}
 	}
 
