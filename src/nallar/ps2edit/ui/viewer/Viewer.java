@@ -114,7 +114,7 @@ public class Viewer {
 
 		boolean plainSearch = false;
 		try {
-			val regex = Pattern.compile(search);
+			val regex = Pattern.compile(search, Pattern.CASE_INSENSITIVE);
 			for (String asset : assetsList) {
 				if (regex.matcher(asset).find())
 					results.add(asset);
@@ -126,7 +126,7 @@ public class Viewer {
 		if (plainSearch) {
 			System.out.println("Plain search for: " + search);
 			for (String asset : assetsList) {
-				if (asset.contains(search))
+				if (asset.toLowerCase().contains(search))
 					results.add(asset);
 			}
 		}
