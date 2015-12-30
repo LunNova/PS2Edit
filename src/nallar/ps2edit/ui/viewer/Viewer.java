@@ -171,6 +171,7 @@ public class Viewer {
 				case "xml":
 				case "txt":
 				case "cfg":
+				case "adr":
 				case "ini":
 				case "props":
 					// plain text
@@ -293,7 +294,8 @@ public class Viewer {
 			if (!SwingUtilities.isRightMouseButton(e))
 				return;
 
-			list.setSelectedIndex(list.locationToIndex(e.getPoint()));
+			if (list.getSelectedIndices().length <= 1)
+				list.setSelectedIndex(list.locationToIndex(e.getPoint()));
 			menu.show(e.getComponent(), e.getX(), e.getY());
 		}
 
