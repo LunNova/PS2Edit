@@ -346,8 +346,8 @@ public class Viewer {
 			}
 
 
-			val width = ((maxX - minX) / GRID_SPACING) * IMAGE_SIZE;
-			val height = ((maxZ - minZ) / GRID_SPACING) * IMAGE_SIZE;
+			val width = (((maxX - minX) / GRID_SPACING) + 1) * IMAGE_SIZE;
+			val height = (((maxZ - minZ) / GRID_SPACING) + 1) * IMAGE_SIZE;
 			val image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 			val graphics = image.createGraphics();
 
