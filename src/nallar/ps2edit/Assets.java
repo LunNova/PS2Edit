@@ -6,6 +6,8 @@
 package nallar.ps2edit;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Uninterruptibles;
 import lombok.val;
 import nallar.ps2edit.PackFile.Entry;
@@ -15,6 +17,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.*;
 
 public class Assets {
 	private static final int EXPECTED_REPLACEMENT_PACK_FILE_ID = 256;
@@ -165,6 +168,33 @@ public class Assets {
 		}
 	}
 
+	/**
+	 * Calls `callable` on each entry passed in. Works on them in the order in the PackFiles.
+	 * Entries in a given pack file are worked on sequentially, and pre-opened.
+	 *
+	 * @param entries
+	 * @param callable
+	 */
+	public void forEntries(List<PackFile.Entry> entries, Consumer<Entry> callable) {
+		Multimap<PackFile, PackFile.Entry> perPackEntries = HashMultimap.create();
+
+		for (val entry : entries) {
+			perPackEntries.put(entry.getPackFile(), entry);
+		}
+
+		val pool = Executors.newFixedThreadPool(1);
+		for (PackFile p : perPackEntries.keys()) {
+			pool.execute(() -> {
+				p.openRead();
+				try {
+					perPackEntries.get(p).forEach(callable::accept);
+				} finally {
+					p.close();
+				}
+			});
+		}
+	}
+
 	public void save() {
 		if (replacementPackFile == null)
 			throw new Error("Can't save Assets if created with writable=false");
@@ -174,9 +204,11 @@ public class Assets {
 			PackFile e = this.packFiles.get(integerArrayListEntry.getKey());
 			e.openRead();
 
-			replacements.forEach(Runnable::run);
-
-			e.close();
+			try {
+				replacements.forEach(Runnable::run);
+			} finally {
+				e.close();
+			}
 		}
 
 		this.replacementPackFile.open();

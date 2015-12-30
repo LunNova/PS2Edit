@@ -237,16 +237,24 @@ public class PackFile {
 			if (this.lastData != null) {
 				return this.lastData;
 			} else {
-				PackFile.this.f.position(this.dataOffset);
-				byte[] data = new byte[this.dataSize];
-				this.lastData = data;
-				PackFile.this.f.get(data);
-				return data;
+				boolean close = false;
+				MappedByteBuffer buffer = PackFile.this.f;
+				if (buffer == null) {
+					PackFile.this.openRead();
+					close = true;
+					buffer = PackFile.this.f;
+				}
+				try {
+					buffer.position(this.dataOffset);
+					byte[] data = new byte[this.dataSize];
+					this.lastData = data;
+					buffer.get(data);
+					return data;
+				} finally {
+					if (close)
+						PackFile.this.close();
+				}
 			}
-		}
-
-		public void setData(String data) {
-			this.setData(data.getBytes(PackFile.charset));
 		}
 
 		public void setData(byte[] data) {
@@ -272,6 +280,10 @@ public class PackFile {
 					this.writeEntry();
 				}
 			}
+		}
+
+		public void setData(String data) {
+			this.setData(data.getBytes(PackFile.charset));
 		}
 
 		public byte[] getData(int from, int length) {

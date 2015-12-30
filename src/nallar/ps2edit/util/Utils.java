@@ -3,12 +3,11 @@
 // (powered by Fernflower decompiler)
 //
 
-package nallar.ps2edit;
+package nallar.ps2edit.util;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
-import nallar.ps2edit.util.Throw;
 
 import java.io.*;
 import java.nio.file.*;

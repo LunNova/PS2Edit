@@ -7,6 +7,7 @@ package nallar.ps2edit;
 
 import com.google.common.base.Throwables;
 import nallar.ps2edit.util.Throw;
+import nallar.ps2edit.util.Utils;
 
 import java.io.*;
 import java.nio.file.*;
@@ -85,7 +86,7 @@ public class Patcher {
 		if (START_GAME) {
 			// Desktop.getDesktop().browse(URI.create("steam://run/218230"));
 			System.out.println("Launching: " + path.launchpadExe);
-			Runtime.getRuntime().exec(new String[] {"C:\\windows\\explorer.exe", path.launchpadExe.getCanonicalPath()}, null, path.launchpadExe.getParentFile());
+			Runtime.getRuntime().exec(new String[]{"C:\\windows\\explorer.exe", path.launchpadExe.getCanonicalPath()}, null, path.launchpadExe.getParentFile());
 			profile("Starting game");
 			sleep(3.5D);
 		}

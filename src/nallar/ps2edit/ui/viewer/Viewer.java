@@ -3,6 +3,7 @@ package nallar.ps2edit.ui.viewer;
 import com.google.common.html.HtmlEscapers;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import lombok.Data;
 import lombok.val;
 import me.nallar.jdds.JDDS;
 import nallar.ps2edit.Assets;
@@ -11,11 +12,13 @@ import nallar.ps2edit.Patcher;
 import nallar.ps2edit.Paths;
 import nallar.ps2edit.util.Throw;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.*;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -165,27 +168,22 @@ public class Viewer {
 		if (entry == null)
 			return;
 
-		entry.getPackFile().openRead();
-		try {
-			switch (type) {
-				case "xml":
-				case "txt":
-				case "cfg":
-				case "adr":
-				case "ini":
-				case "props":
-					// plain text
-					label.setText(convertStringForLabel(entry.getStringData()));
-					break;
-				case "dds":
-					// compressed DDS image
-					label.setIcon(new ImageIcon(JDDS.readDDS(entry.getData())));
-					break;
-				default:
-					label.setText("Can not preview this file type");
-			}
-		} finally {
-			entry.getPackFile().close();
+		switch (type) {
+			case "xml":
+			case "txt":
+			case "cfg":
+			case "adr":
+			case "ini":
+			case "props":
+				// plain text
+				label.setText(convertStringForLabel(entry.getStringData()));
+				break;
+			case "dds":
+				// compressed DDS image
+				label.setIcon(new ImageIcon(JDDS.readDDS(entry.getData())));
+				break;
+			default:
+				label.setText("Can not preview this file type");
 		}
 	}
 
@@ -241,17 +239,29 @@ public class Viewer {
 		return panel;
 	}
 
+	@Data
+	private static class NameXZ {
+		final String name;
+		final int x;
+		final int z;
+	}
+
 	private class FileListListener implements MouseListener {
-		private JList<String> list;
-		private JPopupMenu menu;
+		private static final int IMAGE_SIZE = 256;
+		private static final int GRID_SPACING = 4;
+		private final JList<String> list;
+		private final JPopupMenu menu;
+		private final JMenuItem exportMap;
 
 		public FileListListener(JList<String> list) {
 			this.list = list;
 			this.menu = new JPopupMenu();
+			exportMap = menuItem("Export Map", this::exportMap);
 
-			addMenuItem("Edit", (e) -> {
+			menu.add(menuItem("Edit", (e) -> {
 
 				List<String> selectedFiles = list.getSelectedValuesList();
+				List<PackFile.Entry> entryList = new ArrayList<PackFile.Entry>();
 
 				for (String selectedFile : selectedFiles) {
 					PackFile.Entry asset = assetsMap.get(selectedFile);
@@ -260,33 +270,34 @@ public class Viewer {
 						continue;
 					}
 
-					File replacement = new File(path.replacementsDir, selectedFile);
+					entryList.add(asset);
+				}
+
+				if (Desktop.isDesktopSupported()) {
+					try {
+						Desktop.getDesktop().open(path.replacementsDir);
+					} catch (IOException e1) {
+						throw Throw.sneaky(e1);
+					}
+				}
+				assets.forEntries(entryList, (asset) -> {
+					File replacement = new File(path.replacementsDir, asset.name);
 					if (!replacement.exists()) {
-						asset.getPackFile().openRead();
 						try {
 							byte[] data = asset.getData();
 							Files.write(replacement.toPath(), data);
 						} catch (IOException e1) {
 							throw Throw.sneaky(e1);
-						} finally {
-							asset.getPackFile().close();
 						}
 					}
-					if (Desktop.isDesktopSupported()) {
-						try {
-							Desktop.getDesktop().open(path.replacementsDir);
-						} catch (IOException e1) {
-							throw Throw.sneaky(e1);
-						}
-					}
-				}
-			});
+				});
+			}));
 		}
 
-		private void addMenuItem(String name, ActionListener l) {
+		private JMenuItem menuItem(String name, ActionListener l) {
 			JMenuItem item = new JMenuItem(name);
 			item.addActionListener(l);
-			menu.add(item);
+			return item;
 		}
 
 		@Override
@@ -296,7 +307,65 @@ public class Viewer {
 
 			if (list.getSelectedIndices().length <= 1)
 				list.setSelectedIndex(list.locationToIndex(e.getPoint()));
+
+			menu.remove(exportMap);
+			if (list.getSelectedValue() != null &&
+					list.getSelectedValue().toLowerCase().contains("tile_") &&
+					list.getSelectedValue().toLowerCase().contains("lod0")) {
+				menu.add(exportMap);
+			}
+
 			menu.show(e.getComponent(), e.getX(), e.getY());
+		}
+
+		private void exportMap(ActionEvent actionEvent) {
+			String selectedItem = list.getSelectedValue();
+			String start = selectedItem.substring(0, selectedItem.toLowerCase().indexOf("_tile"));
+			Pattern search = Pattern.compile('^' + start + "_tile_([-\\d]+)_([-\\d]+)_LOD0\\.dds$", Pattern.CASE_INSENSITIVE);
+			List<NameXZ> files = new ArrayList<>();
+
+			int maxX, maxZ, minX, minZ;
+			maxX = maxZ = Integer.MIN_VALUE;
+			minX = minZ = Integer.MAX_VALUE;
+			for (String item : assetsList) {
+				Matcher m = search.matcher(item);
+				if (m.find()) {
+					val x = Integer.parseInt(m.group(1));
+					val z = Integer.parseInt(m.group(2));
+					if (x > maxX)
+						maxX = x;
+					if (z > maxZ)
+						maxZ = z;
+					if (x < minX)
+						minX = x;
+					if (z < minZ)
+						minZ = z;
+
+					files.add(new NameXZ(item, x, z));
+				}
+			}
+
+
+			val width = ((maxX - minX) / GRID_SPACING) * IMAGE_SIZE;
+			val height = ((maxZ - minZ) / GRID_SPACING) * IMAGE_SIZE;
+			val image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+			val graphics = image.createGraphics();
+
+			for (NameXZ nameXZ : files) {
+				val drawX = ((nameXZ.x - minX) / GRID_SPACING) * IMAGE_SIZE;
+				val drawZ = ((nameXZ.z - minZ) / GRID_SPACING) * IMAGE_SIZE;
+
+				val entry = assetsMap.get(nameXZ.getName());
+
+				graphics.drawImage(JDDS.readDDS(entry.getData()), drawX, drawZ, null);
+			}
+
+			File output = new File(path.replacementsDir, start + " map.png");
+			try {
+				ImageIO.write(image, "png", output);
+			} catch (IOException e) {
+				throw Throw.sneaky(e);
+			}
 		}
 
 		@Override
@@ -314,7 +383,5 @@ public class Viewer {
 		@Override
 		public void mouseExited(MouseEvent e) {
 		}
-
 	}
-
 }
