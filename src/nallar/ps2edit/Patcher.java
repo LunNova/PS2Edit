@@ -62,7 +62,7 @@ public class Patcher {
 				Utils.kill("wws_crashreport_uploader.exe") |
 						Utils.kill("Launchpad.exe") |
 						Utils.kill("AwesomiumProcess.exe") |
-						Utils.kill("Planetside2.exe");
+						Utils.kill("Planetside2_x64.exe");
 		profile("Killing PS2 tasks");
 
 		if (path.downloadInfo.exists() && !path.downloadInfo.delete()) {
