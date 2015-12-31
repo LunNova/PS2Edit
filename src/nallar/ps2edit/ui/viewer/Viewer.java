@@ -3,16 +3,12 @@ package nallar.ps2edit.ui.viewer;
 import com.google.common.html.HtmlEscapers;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import lombok.Data;
 import lombok.val;
 import me.nallar.jdds.JDDS;
-import nallar.ps2edit.Assets;
-import nallar.ps2edit.PackFile;
-import nallar.ps2edit.Patcher;
+import nallar.ps2edit.*;
 import nallar.ps2edit.Paths;
 import nallar.ps2edit.util.Throw;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -180,7 +176,11 @@ public class Viewer {
 				break;
 			case "dds":
 				// compressed DDS image
-				label.setIcon(new ImageIcon(JDDS.readDDS(entry.getData())));
+				BufferedImage decompressed;
+				synchronized (JDDS.class) {
+					decompressed = JDDS.readDDS(entry.getData());
+				}
+				label.setIcon(new ImageIcon(decompressed));
 				break;
 			default:
 				label.setText("Can not preview this file type");
@@ -239,16 +239,7 @@ public class Viewer {
 		return panel;
 	}
 
-	@Data
-	private static class NameXZ {
-		final String name;
-		final int x;
-		final int z;
-	}
-
 	private class FileListListener implements MouseListener {
-		private static final int IMAGE_SIZE = 256;
-		private static final int GRID_SPACING = 4;
 		private final JList<String> list;
 		private final JPopupMenu menu;
 		private final JMenuItem exportMap;
@@ -259,9 +250,8 @@ public class Viewer {
 			exportMap = menuItem("Export Map", this::exportMap);
 
 			menu.add(menuItem("Edit", (e) -> {
-
 				List<String> selectedFiles = list.getSelectedValuesList();
-				List<PackFile.Entry> entryList = new ArrayList<PackFile.Entry>();
+				List<PackFile.Entry> entryList = new ArrayList<>();
 
 				for (String selectedFile : selectedFiles) {
 					PackFile.Entry asset = assetsMap.get(selectedFile);
@@ -320,52 +310,12 @@ public class Viewer {
 
 		private void exportMap(ActionEvent actionEvent) {
 			String selectedItem = list.getSelectedValue();
-			String start = selectedItem.substring(0, selectedItem.toLowerCase().indexOf("_tile"));
-			Pattern search = Pattern.compile('^' + start + "_tile_([-\\d]+)_([-\\d]+)_LOD0\\.dds$", Pattern.CASE_INSENSITIVE);
-			List<NameXZ> files = new ArrayList<>();
+			String name = selectedItem.substring(0, selectedItem.toLowerCase().indexOf("_tile"));
 
-			int maxX, maxZ, minX, minZ;
-			maxX = maxZ = Integer.MIN_VALUE;
-			minX = minZ = Integer.MAX_VALUE;
-			for (String item : assetsList) {
-				Matcher m = search.matcher(item);
-				if (m.find()) {
-					val x = Integer.parseInt(m.group(1));
-					val z = Integer.parseInt(m.group(2));
-					if (x > maxX)
-						maxX = x;
-					if (z > maxZ)
-						maxZ = z;
-					if (x < minX)
-						minX = x;
-					if (z < minZ)
-						minZ = z;
-
-					files.add(new NameXZ(item, x, z));
-				}
-			}
-
-
-			val width = (((maxX - minX) / GRID_SPACING) + 1) * IMAGE_SIZE;
-			val height = (((maxZ - minZ) / GRID_SPACING) + 1) * IMAGE_SIZE;
-			val image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-			val graphics = image.createGraphics();
-
-			for (NameXZ nameXZ : files) {
-				val drawX = ((nameXZ.x - minX) / GRID_SPACING) * IMAGE_SIZE;
-				val drawZ = ((nameXZ.z - minZ) / GRID_SPACING) * IMAGE_SIZE;
-
-				val entry = assetsMap.get(nameXZ.getName());
-
-				graphics.drawImage(JDDS.readDDS(entry.getData()), drawX, drawZ, null);
-			}
-
-			File output = new File(path.replacementsDir, start + " map.png");
-			try {
-				ImageIO.write(image, "png", output);
-			} catch (IOException e) {
-				throw Throw.sneaky(e);
-			}
+			new Thread(() -> {
+				MapExporter exporter = new MapExporter(assets, path);
+				exporter.saveMap(name, "png", new File(path.replacementsDir, name + " map.png"));
+			}).start();
 		}
 
 		@Override
