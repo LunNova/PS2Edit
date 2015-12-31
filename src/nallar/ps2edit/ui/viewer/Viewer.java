@@ -136,13 +136,12 @@ public class Viewer {
 	private List<String> getReplacements() {
 		val list = new ArrayList<String>();
 
-		val replacementsArray = path.replacementsDir.list();
-
-		List<String> replacements = replacementsArray == null ? Collections.emptyList() : Arrays.asList(replacementsArray);
+		List<String> replacements = path.replacements.getReplacementNames();
 
 		list.add("Showing " + replacements.size() + " replacement files.");
 		list.add("Enter text in the search box above to search all PS2 files.");
 		list.add("Right click -> edit to open the file for editing.");
+		list.add(" ");
 
 		list.addAll(replacements);
 

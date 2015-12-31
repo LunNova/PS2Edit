@@ -21,6 +21,7 @@ public class Paths {
 	public final File logsDirectory;
 	public final File clientConfig;
 	public final File launchpadExe;
+	public final Replacements replacements;
 	private final Properties properties;
 	private final File propertiesFile;
 
@@ -53,6 +54,7 @@ public class Paths {
 		logsDirectory = new File(ps2Dir, "Logs");
 		clientConfig = new File(ps2Dir, CLIENT_CONFIG);
 		launchpadExe = new File(ps2Dir, LAUNCHPAD_EXECUTABLE);
+		replacements = new Replacements(replacementsDir.toPath());
 		if (!clientConfig.exists()) {
 			throw new RuntimeException("Client test launchpad config not found. PS2 Patcher only works on the test server!");
 		}

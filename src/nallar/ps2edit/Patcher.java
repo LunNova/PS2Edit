@@ -6,6 +6,7 @@
 package nallar.ps2edit;
 
 import com.google.common.base.Throwables;
+import lombok.val;
 import nallar.ps2edit.util.Throw;
 import nallar.ps2edit.util.Utils;
 
@@ -130,37 +131,32 @@ public class Patcher {
 	}
 
 	private void loadReplacements(Assets assets) {
-		File[] replacementFiles = path.replacementsDir.listFiles();
-		if (replacementFiles == null) {
-			throw Throw.sneaky(new IOException("Replacement file dir " + path.replacementsDir + " does not exist."));
-		}
+		val replacementFiles = path.replacements.getReplacements();
 
-		for (final File replacement : replacementFiles) {
-			String entry = replacement.getName();
-			if (entry.contains(".") && !replacement.isDirectory() && !entry.equals("effects.yml")) {
-				final boolean isModel = entry.endsWith(".obj");
-				if (isModel) {
-					entry = entry.replace(".obj", ".dme");
-				}
+		for (final Path replacement : replacementFiles) {
+			String entry = replacement.getFileName().toString();
+			final boolean isModel = entry.endsWith(".obj");
+			if (isModel) {
+				entry = entry.replace(".obj", ".dme");
+			}
 
-				final String finalEntry = entry;
-				if (!assets.addAction(entry, () -> {
-					try {
-						byte[] data;
-						if (isModel) {
-							data = assets.getByteData(finalEntry).clone();
-							DMEFile.replaceMesh(data, replacement);
-						} else {
-							data = Files.readAllBytes(replacement.toPath());
-						}
-
-						assets.setByteData(finalEntry, data);
-					} catch (IOException var2) {
-						throw Throwables.propagate(var2);
+			final String finalEntry = entry;
+			if (!assets.addAction(entry, () -> {
+				try {
+					byte[] data;
+					if (isModel) {
+						data = assets.getByteData(finalEntry).clone();
+						DMEFile.replaceMesh(data, replacement.toFile());
+					} else {
+						data = Files.readAllBytes(replacement);
 					}
-				})) {
-					System.err.println("Failed to find file " + replacement.getName() + " in assets pack to replace.");
+
+					assets.setByteData(finalEntry, data);
+				} catch (IOException var2) {
+					throw Throwables.propagate(var2);
 				}
+			})) {
+				System.err.println("Failed to find file " + entry + " in assets pack to replace.");
 			}
 		}
 	}
