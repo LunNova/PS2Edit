@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.regex.*;
 
 public class Viewer {
+	private static final int MAX_RESULTS = 25000;
 	private final Map<String, PackFile.Entry> assetsMap;
 	private final List<String> assetsList;
 	private final Paths path;
@@ -110,13 +111,17 @@ public class Viewer {
 
 		search = search.toLowerCase();
 		val results = new ArrayList<String>();
+		int count = 0;
 
 		boolean plainSearch = false;
 		try {
 			val regex = Pattern.compile(search, Pattern.CASE_INSENSITIVE);
 			for (String asset : assetsList) {
-				if (regex.matcher(asset).find())
+				if (regex.matcher(asset).find()) {
 					results.add(asset);
+					if (++count >= MAX_RESULTS)
+						break;
+				}
 			}
 		} catch (PatternSyntaxException e) {
 			plainSearch = true;
@@ -125,12 +130,15 @@ public class Viewer {
 		if (plainSearch) {
 			System.out.println("Plain search for: " + search);
 			for (String asset : assetsList) {
-				if (asset.toLowerCase().contains(search))
+				if (asset.toLowerCase().contains(search)) {
 					results.add(asset);
+					if (++count >= MAX_RESULTS)
+						break;
+				}
 			}
 		}
 
-		return results.size() > 25000 ? results.subList(0, 25000) : results;
+		return results;
 	}
 
 	private List<String> getReplacements() {
