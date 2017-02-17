@@ -123,7 +123,7 @@ class PackFile(val file: File) {
     }
 
     @Synchronized fun close() {
-        if (--this.openCount == 0) {
+		if (openCount > 0 && --this.openCount == 0) {
             this.close_()
         }
     }

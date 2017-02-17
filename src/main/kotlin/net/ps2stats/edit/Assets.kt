@@ -6,7 +6,7 @@ import java.util.*
 import java.util.concurrent.Executors
 import java.util.function.Consumer
 
-class Assets(path: Paths, writable: Boolean) {
+class Assets(val path: Paths, writable: Boolean) {
     internal val nameToOrig: MutableMap<String, PackFile.Entry> = HashMap(60)
     internal val packToActionList: MutableMap<Int, MutableList<() -> Unit>> = HashMap(60)
     internal val packFiles = mutableListOf<PackFile>()
@@ -162,6 +162,15 @@ class Assets(path: Paths, writable: Boolean) {
                 e.close()
             }
         }
+
+		if (nameToReplacement.isEmpty()) {
+			println("No asset replacements exist, not using replacement pack file")
+			replacementPackFile.close()
+			if (!replacementPackFile.file.delete())
+				error("Failed to remove unnecessary replacement pack file")
+			path.replacementPackFile = null
+			return
+		}
 
         this.replacementPackFile.open()
 

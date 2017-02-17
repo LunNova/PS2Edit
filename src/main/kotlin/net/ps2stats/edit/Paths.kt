@@ -10,7 +10,7 @@ import javax.swing.JFileChooser
 import javax.swing.filechooser.FileFilter
 
 class Paths {
-    private val CLIENT_CONFIG_TEST = "ClientConfigTestLaunchpad.ini"
+	private val CLIENT_CONFIG_TEST = "ClientConfig.ini"
     private val CLIENT_CONFIG_LIVE = "ClientConfigLiveLaunchpad.ini"
     private val LAUNCHPAD_EXECUTABLE = "LaunchPad.exe"
     private val PLANETSIDE2_EXECUTABLE = "PlanetSide2_x64.exe"
@@ -106,6 +106,7 @@ class Paths {
             dirs.addAll(Arrays.asList(
                     "C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\PlanetSide 2 Test",
                     "C:\\PS2\\PTS",
+				"C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\PlanetSide 2",
                     "C:\\Steam\\SteamApps\\common\\PlanetSide 2",
                     "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\PlanetSide 2",
                     "C:\\Program Files\\Steam\\SteamApps\\common\\PlanetSide 2"
@@ -113,8 +114,9 @@ class Paths {
             return dirs.toTypedArray()
         }
 
-    private fun guiSelectPS2Dir(): File? {
-        val currentSelection = File(properties.getProperty("ps2dir"))
+	fun guiSelectPS2Dir(): File? {
+		val currentDir = properties.getProperty("ps2dir")
+		val currentSelection = if (currentDir == null) File("/") else File(properties.getProperty("ps2dir"))
         val chooser = JFileChooser()
         chooser.currentDirectory = if (currentSelection.isDirectory) currentSelection else File("/")
         chooser.dialogTitle = "Select your PTS Planetside2_x64.exe"

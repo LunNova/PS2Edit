@@ -25,11 +25,12 @@ import java.util.regex.*;
 
 public class AssetViewer {
 	private static final int MAX_RESULTS = 25000;
-	private final Map<String, PackFile.Entry> assetsMap;
-	private final List<String> assetsList;
-	private final Paths path;
-	private final Assets assets;
+	private final JFrame frame;
 	private final Console console;
+	private Map<String, PackFile.Entry> assetsMap;
+	private List<String> assetsList;
+	private Paths path;
+	private Assets assets;
 	private JTextField searchField;
 	private JList<String> list;
 	private JPanel panel;
@@ -46,12 +47,10 @@ public class AssetViewer {
 		$$$setupUI$$$();
 	}
 
-	private AssetViewer(Console console) {
+	private AssetViewer(Console console, JFrame frame) {
 		this.console = console;
-		path = new Paths();
-		assets = new Assets(path, false);
-		assetsMap = assets.getFiles();
-		assetsList = new ArrayList<>(assetsMap.keySet());
+		this.frame = frame;
+		loadPS2Data();
 		Collections.sort(assetsList);
 		list.addListSelectionListener((e) -> {
 			if (!e.getValueIsAdjusting())
@@ -78,6 +77,16 @@ public class AssetViewer {
 		rightScrollPane.getVerticalScrollBar().setUnitIncrement(20);
 		handleSearch();
 		patchAndRunButton.addActionListener(e -> launchGame());
+		val bar = new MenuBar();
+		val menu = new Menu("Options");
+		val choosePs2Directory = new MenuItem("Choose PS2 Directory");
+		choosePs2Directory.addActionListener((e) -> {
+			path.guiSelectPS2Dir();
+			loadPS2Data();
+		});
+		menu.add(choosePs2Directory);
+		bar.add(menu);
+		frame.setMenuBar(bar);
 	}
 
 	private static String convertStringForLabel(String stringData) {
@@ -94,10 +103,18 @@ public class AssetViewer {
 		val console = Console.create();
 
 		JFrame frame = new JFrame("PS2 Asset Viewer");
-		frame.setContentPane(new AssetViewer(console).panel);
+		frame.setContentPane(new AssetViewer(console, frame).panel);
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
+	}
+
+	private void loadPS2Data() {
+		path = new Paths();
+		assets = new Assets(path, false);
+		assetsMap = assets.getFiles();
+		assetsList = new ArrayList<>(assetsMap.keySet());
+		frame.setTitle("PS2 Asset Viwer - " + (path.isLive() ? "Live" : "Test") + " - " + path.getPs2Dir());
 	}
 
 	private void launchGame() {
