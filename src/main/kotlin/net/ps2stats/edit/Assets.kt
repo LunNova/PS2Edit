@@ -14,6 +14,9 @@ class Assets(path: Paths, writable: Boolean) {
     internal val replacementPackFile: PackFile?
 
     init {
+        if (path.isLive && writable)
+            error("Asset editing is disabled on live")
+
         val packFileDir = path.assetsDir
 
         var fakePackFileNumber = 0

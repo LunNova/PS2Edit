@@ -47,7 +47,7 @@ class Paths {
     val logsDirectory = File(ps2Dir, "Logs")
     val clientConfig = anyOf(ps2Dir, CLIENT_CONFIG_LIVE, CLIENT_CONFIG_TEST) ?: error("Couldn't find ClientConfigLive/TestLaunchpad.ini")
     val launchpadExe = File(ps2Dir, LAUNCHPAD_EXECUTABLE)
-    val locale = File(ps2Dir, "Locale${File.pathSeparator}en_us_data.dir")
+    val locale = File(ps2Dir, "Locale${File.separator}en_us_data.dir")
     val assetsDir = File(ps2Dir, "Resources" + File.separator + "Assets")
     val isLive = clientConfig.name == CLIENT_CONFIG_LIVE || clientConfig.name != CLIENT_CONFIG_TEST
 

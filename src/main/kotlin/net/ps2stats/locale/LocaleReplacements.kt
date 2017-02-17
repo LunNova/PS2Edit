@@ -4,7 +4,7 @@ import java.io.File
 
 class LocaleReplacements {
     val textSubstitutions = mutableMapOf<String, String>()
-    val idSubstitutions = mutableMapOf<Int, String>()
+    val idSubstitutions = mutableMapOf<Long, String>()
 
     fun load(file: File) {
         val default = File(file, "default.cfg")
@@ -52,6 +52,7 @@ class LocaleReplacements {
 
                 val id = line.substring(0, index)
                 val replacement = line.substring(index + 1)
+                idSubstitutions[id.toLong()] = replacement.replace("\\n", "\r\n")
             }
             if (inSub > 0)
                 error("Unmatched substitution")
@@ -72,13 +73,16 @@ class LocaleReplacements {
     fun replace(localeFile: File) {
         val locale = Locale()
         locale.load(localeFile)
-        locale.entries.forEach { locale ->
-            val text = locale.text
+        locale.entries.forEach { entry ->
+            val text = entry.text
             var newText = text
             textSubstitutions.forEach {
-                newText = text.replace(it.key, it.value, true)
+                newText = newText.replace(it.key, it.value, true)
             }
-            locale.text = newText
+            if (newText != text) {
+                println("Changed from $text to $newText")
+                entry.text = newText
+            }
         }
         idSubstitutions.forEach {
             val entry = locale.entriesById[it.key] ?: error("Couldn't find entry with ID ${it.key}")

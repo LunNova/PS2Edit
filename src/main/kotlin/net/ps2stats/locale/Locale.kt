@@ -5,13 +5,13 @@ import java.io.OutputStreamWriter
 
 class Locale {
     val entries = mutableListOf<Entry>()
-    val entriesById = mutableMapOf<Int, Entry>()
+    val entriesById = mutableMapOf<Long, Entry>()
 
     private fun dat(dir: File) = File(dir.parent, dir.nameWithoutExtension + ".dat")
 
     fun parseEntry(data: String): Entry {
         val first = data.indexOf('\t')
-        val id = data.substring(0, first).toInt()
+        val id = data.substring(0, first).toLong()
         val second = data.indexOf('\t', first + 1)
         val flags = data.substring(first + 1, second)
         return Entry(id, flags, data.substring(second + 1))
@@ -34,7 +34,7 @@ class Locale {
             // 93264	ucdt	Gunner Kill Assist Share - Lightning
 
             val parts = it.split('\t')
-            val id = parts[0].toInt()
+            val id = parts[0].toLong()
             val start = parts[1].toInt()
             val length = parts[2].toInt()
 
@@ -58,14 +58,14 @@ class Locale {
                 var offset = 3
 
                 entries.forEach {
-                    val length = it.id.toString().length + it.flags.length + it.text.length + 2;
+                    val length = it.id.toString().length + it.flags.length + it.text.length + 2
                     dirWriter.write(it.id.toString() + '\t' + offset + '\t' + length + "d\r\n")
-                    datWriter.write(it.id.toString() + '\t' + it.flags + '\t' + it.text)
+                    datWriter.write(it.id.toString() + '\t' + it.flags + '\t' + it.text + "\r\n")
                     offset += length + 2
                 }
             }
         }
     }
 
-    data class Entry(val id: Int, val flags: String, var text: String)
+    data class Entry(val id: Long, val flags: String, var text: String)
 }

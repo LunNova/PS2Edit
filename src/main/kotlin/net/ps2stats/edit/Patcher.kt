@@ -62,10 +62,9 @@ class Patcher(private val path: Paths) {
         replacer.load(path.localeReplacementsDir)
         replacer.replace(path.locale)
 
-        val assets = Assets(path, !path.isLive)
-        profile("Loading " + assets.numFiles + " from assets")
-
-        if (path.isLive) {
+        if (!path.isLive) {
+            val assets = Assets(path, true)
+            profile("Test client - Loading " + assets.numFiles + " from assets")
             ClientConfigUpdater.applyChanges(path.clientConfig)
             profile("Test client - Updating client config")
             AssetReplacer.loadReplacements(path, assets)

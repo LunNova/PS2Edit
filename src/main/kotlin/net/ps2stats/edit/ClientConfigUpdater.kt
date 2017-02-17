@@ -6,7 +6,7 @@ import java.io.File
 
 object ClientConfigUpdater {
     private val replacements = checkLengths(mapOf(
-            "Address=recap.daybreakgames.com:15081\r\n" to "Address=127.0.0.1:15081 \r\nEnabled=0\r\n",
+            "Address=recap.daybreakgames.com:15081\r\n" to "Address=127.0.0.1:1508\r\nEnabled=0\r\n",
             "IncludeIndirectMemory=1" to "IncludeIndirectMemory=0",
             "http://www.planetside2.com/error/game.action?code=G" to "https://ps2stats.net/crash/?code=G",
             "LocalLogLevel=0" to "LocalLogLevel=5"
