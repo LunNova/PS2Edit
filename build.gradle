@@ -1,87 +1,35 @@
-//Some warnings suppressed due to incorrect IDEA behaviour
-//See IDEA-141744
-
-apply plugin: 'java'
-apply plugin: 'maven'
-
-tasks.withType(JavaCompile) {
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+buildscript {
+	ext.kotlin_version = '1.0.6'
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+	}
 }
 
-version = '1.0-SNAPSHOT'
-group = 'me.nallar'
-archivesBaseName = 'ps2'
+apply plugin: 'kotlin'
+apply plugin: 'application'
 
-// Extended project information
-ext.projectName = 'PS2Patcher'
-ext.inceptionYear = '2015'
-ext.packaging = 'jar'
-ext.url = 'http://nallar.me/buildservice'
-ext.description = 'PS2 Patcher'
-ext.organization = 'nallar.me'
+mainClassName = 'net.ps2stats.ui.viewer.Viewer'
 
-// Define variables
-ext.buildNumber = System.getenv("BUILD_NUMBER") ?: 0
-ext.ciSystem = System.getenv("JENKINS_URL") ? 'Jenkins' : 'unknown'
-ext.commit = System.getenv("GIT_COMMIT") ?: 'unknown'
-
-// Source compiler configuration
-tasks.withType(JavaCompile) {
-    options.compilerArgs += [ '-Xlint:all', '-Xlint:-path' ]
-    options.deprecation = true
-    options.encoding = 'utf8'
-}
+defaultTasks 'run'
 
 repositories {
-    mavenCentral()
-    maven { url 'http://repo.nallar.me/' }
-}
-
-sourceSets {
-    main {
-        java {
-            srcDir 'src'
-        }
-        //noinspection GroovyAssignabilityCheck
-        resources {
-            srcDir 'resources'
-        }
-    }
-}
-
-
-configurations {
-    provided
-    compile.extendsFrom provided
-}
-
-//noinspection GroovyAssignabilityCheck
-configurations.all {
-    // only cache changing dependencies for 1 minute
-    resolutionStrategy { cacheChangingModulesFor 60, 'seconds' }
+	mavenCentral()
+	maven { url 'http://repo.nallar.me/' }
 }
 
 dependencies {
-    compile 'com.google.guava:guava:18.0'
-    compile 'org.projectlombok:lombok:1.16.6'
-    compile 'com.intellij:forms_rt:7.0.3'
-    compile group: 'me.nallar', name: 'jdds', version: '1.0-SNAPSHOT', changing: true
+	compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+	compile 'org.projectlombok:lombok:1.16.6'
+	compile 'com.google.guava:guava:20.0'
+	compile 'com.intellij:forms_rt:7.0.3'
+	compile group: 'me.nallar', name: 'jdds', version: '1.0-SNAPSHOT', changing: true
+	testCompile 'junit:junit:4.11'
+	testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 }
 
-jar {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from((configurations.runtime - configurations.provided).filter{it.exists()}.collect { it.isDirectory() ? it : zipTree(it) }) {
-        exclude "META-INF/**"
-    }
-    manifest {
-        attributes 'Main-Class': 'nallar.ps2edit.ui.viewer.Viewer'
-    }
+task wrapper(type: Wrapper) {
+	gradleVersion = "3.3"
 }
-
-jar.manifest.mainAttributes(
-        "Built-By": System.properties['user.name'],
-        "Created-By": System.properties['java.vm.version'] + " (" + System.properties['java.vm.vendor'] + ")",
-        "Implementation-Title": name,
-        "Implementation-Version": version + "+" + ciSystem + "-b" + buildNumber + ".git-" + commit,
-        "Implementation-Vendor": url)

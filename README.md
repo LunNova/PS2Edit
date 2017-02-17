@@ -1,11 +1,18 @@
 #PS2Edit: PS2 File Viewer and Editor
 
-PS2Edit can be used to view Planetside 2's assets on the PTS. By right clicking an asset and selecting edit, that asset can be modified.
+PS2Edit can be used to view and modify Planetside 2's assets, including:
 
-PS2Edit's patching only works on the PTS. It will not run on live servers.
+* Viewing and editing of compressed pack file contents (models, images, sounds, graphics settings, scaleform UI files)
+* Replacement of font files
+* Replacement of entries in locale files
+* Extraction of high resolution continent maps
 
-If you circumvent this check and run on live servers, it will be detected and you will be banned. Can't say I didn't warn you. Don't be stupid please.
+PS2Edit's compressed asset patching only works on the PTS. It will not run on live servers.  
+Font/locale patching 
+
+[Font file](https://www.reddit.com/r/Planetside/comments/5tukyj/omg_banned_wtfbbq11/) and [locale](https://www.reddit.com/r/Planetside/comments/5tukyj/omg_banned_wtfbbq11/ddp6ns8/) patching will work on live servers.
 
 #Jenkins Builds
 
-http://nallar.me/buildservice/job/PS2Edit/
+https://jenkins.nallar.me/job/PS2Edit/
+
