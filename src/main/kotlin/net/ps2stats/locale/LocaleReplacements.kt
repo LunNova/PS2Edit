@@ -24,6 +24,7 @@ class LocaleReplacements {
         files.forEach { file ->
             var inSub = 0
 			var caseSensitive = false
+			var caseSensitiveAuto = false
             var from = ""
             file.forEachLine {
                 var line = it
@@ -37,7 +38,13 @@ class LocaleReplacements {
                     if (inSub == 2) {
                         from = line
                     } else {
-						(if (caseSensitive) textSubstitutionsCaseSensitive else textSubstitutions)[from] = line
+						if (caseSensitiveAuto) {
+							textSubstitutionsCaseSensitive[from.toUpperCase()] = line.toUpperCase()
+							textSubstitutionsCaseSensitive[from.toLowerCase()] = line.toLowerCase()
+							textSubstitutionsCaseSensitive[toTitleCase(from)] = toTitleCase(line)
+						} else {
+							(if (caseSensitive) textSubstitutionsCaseSensitive else textSubstitutions)[from] = line
+						}
                         from = ""
                     }
                     inSub--
@@ -47,11 +54,17 @@ class LocaleReplacements {
 				if (line == "sub:") {
 					inSub = 2
 					caseSensitive = false
+					caseSensitiveAuto = false
 					return@forEachLine
 				}
 				if (line == "cssub:") {
 					inSub = 2
 					caseSensitive = true
+					return@forEachLine
+				}
+				if (line == "casub:") {
+					inSub = 2
+					caseSensitiveAuto = true
 					return@forEachLine
 				}
                 val index = line.indexOf(':')
@@ -66,6 +79,19 @@ class LocaleReplacements {
                 error("Unmatched substitution")
         }
     }
+
+	fun toTitleCase(s: String): String {
+		val sb = StringBuilder()
+		var capNext = true
+
+		s.forEach { c_ ->
+			val c = if (capNext) Character.toUpperCase(c_) else Character.toLowerCase(c_)
+			sb.append(c)
+			capNext = c == ' ' || c == '-'
+		}
+
+		return sb.toString()
+	}
 
     fun save(file: File) {
         file.bufferedWriter().use { writer ->
