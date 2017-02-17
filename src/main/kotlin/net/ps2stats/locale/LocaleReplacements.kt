@@ -4,6 +4,7 @@ import java.io.File
 
 class LocaleReplacements {
     val textSubstitutions = mutableMapOf<String, String>()
+	val textSubstitutionsCaseSensitive = mutableMapOf<String, String>()
     val idSubstitutions = mutableMapOf<Long, String>()
 
     fun load(file: File) {
@@ -22,6 +23,7 @@ class LocaleReplacements {
         val files = file.listFiles(File::isFile)
         files.forEach { file ->
             var inSub = 0
+			var caseSensitive = false
             var from = ""
             file.forEachLine {
                 var line = it
@@ -35,17 +37,23 @@ class LocaleReplacements {
                     if (inSub == 2) {
                         from = line
                     } else {
-                        textSubstitutions[from] = line
+						(if (caseSensitive) textSubstitutionsCaseSensitive else textSubstitutions)[from] = line
                         from = ""
                     }
                     inSub--
 
                     return@forEachLine
                 }
-                if (line == "sub:") {
-                    inSub = 2
-                    return@forEachLine
-                }
+				if (line == "sub:") {
+					inSub = 2
+					caseSensitive = false
+					return@forEachLine
+				}
+				if (line == "cssub:") {
+					inSub = 2
+					caseSensitive = true
+					return@forEachLine
+				}
                 val index = line.indexOf(':')
                 if (index == -1)
                     error("Expected ':' in $line")
@@ -61,9 +69,12 @@ class LocaleReplacements {
 
     fun save(file: File) {
         file.bufferedWriter().use { writer ->
-            textSubstitutions.forEach {
-                writer.write("sub:\r\n\t${it.key.replace("\r\n", "\\n")}\r\n\t${it.value.replace("\r\n", "\\n")}\r\n")
-            }
+			textSubstitutions.forEach {
+				writer.write("sub:\r\n\t${it.key.replace("\r\n", "\\n")}\r\n\t${it.value.replace("\r\n", "\\n")}\r\n")
+			}
+			textSubstitutionsCaseSensitive.forEach {
+				writer.write("cssub:\r\n\t${it.key.replace("\r\n", "\\n")}\r\n\t${it.value.replace("\r\n", "\\n")}\r\n")
+			}
             idSubstitutions.forEach {
                 writer.write("${it.key}:${it.value.replace("\r\n", "\\n")}\r\n")
             }
@@ -76,9 +87,12 @@ class LocaleReplacements {
         locale.entries.forEach { entry ->
             val text = entry.text
             var newText = text
-            textSubstitutions.forEach {
-                newText = newText.replace(it.key, it.value, true)
-            }
+			textSubstitutions.forEach {
+				newText = newText.replace(it.key, it.value, true)
+			}
+			textSubstitutionsCaseSensitive.forEach {
+				newText = newText.replace(it.key, it.value)
+			}
             if (newText != text) {
                 println("Changed from $text to $newText")
                 entry.text = newText
