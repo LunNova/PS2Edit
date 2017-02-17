@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.function.*;
 import java.util.regex.*;
 
-public class Viewer {
+public class AssetViewer {
 	private static final int MAX_RESULTS = 25000;
 	private final Map<String, PackFile.Entry> assetsMap;
 	private final List<String> assetsList;
@@ -46,7 +46,7 @@ public class Viewer {
 		$$$setupUI$$$();
 	}
 
-	private Viewer(Console console) {
+	private AssetViewer(Console console) {
 		this.console = console;
 		path = new Paths();
 		assets = new Assets(path, false);
@@ -93,8 +93,8 @@ public class Viewer {
 	public static void main(String[] args) {
 		val console = Console.create();
 
-		JFrame frame = new JFrame("Viewer");
-		frame.setContentPane(new Viewer(console).panel);
+		JFrame frame = new JFrame("PS2 Asset Viewer");
+		frame.setContentPane(new AssetViewer(console).panel);
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
@@ -304,7 +304,7 @@ public class Viewer {
 						throw new RuntimeException(e1);
 					}
 				}
-				assets.forEntries(entryList, Viewer.this::extractForEditing);
+				assets.forEntries(entryList, AssetViewer.this::extractForEditing);
 			}));
 		}
 

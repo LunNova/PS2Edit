@@ -67,5 +67,5 @@ class Locale {
         }
     }
 
-    data class Entry(val id: Int, val flags: String, val text: String)
+    data class Entry(val id: Int, val flags: String, var text: String)
 }

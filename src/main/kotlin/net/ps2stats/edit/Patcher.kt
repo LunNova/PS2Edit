@@ -1,5 +1,6 @@
 package net.ps2stats.edit
 
+import net.ps2stats.locale.LocaleReplacements
 import java.io.*
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -56,6 +57,10 @@ class Patcher(private val path: Paths) {
 
         lastTime = System.nanoTime()
         profile("Replacing " + replaceFonts() + " fonts")
+
+        val replacer = LocaleReplacements()
+        replacer.load(path.localeReplacementsDir)
+        replacer.replace(path.locale)
 
         val assets = Assets(path, !path.isLive)
         profile("Loading " + assets.numFiles + " from assets")
