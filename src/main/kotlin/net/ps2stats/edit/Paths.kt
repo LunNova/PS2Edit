@@ -114,9 +114,8 @@ class Paths {
             return dirs.toTypedArray()
         }
 
-	fun guiSelectPS2Dir(): File? {
-		val currentDir = properties.getProperty("ps2dir")
-		val currentSelection = if (currentDir == null) File("/") else File(properties.getProperty("ps2dir"))
+	fun guiSelectPS2Dir(useCurrent: Boolean = false): File? {
+		val currentSelection = File((if (useCurrent) ps2Dir.toString() else properties.getProperty("ps2dir")) ?: "/")
         val chooser = JFileChooser()
         chooser.currentDirectory = if (currentSelection.isDirectory) currentSelection else File("/")
         chooser.dialogTitle = "Select your PTS Planetside2_x64.exe"

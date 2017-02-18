@@ -81,7 +81,7 @@ public class AssetViewer {
 		val menu = new Menu("Options");
 		val choosePs2Directory = new MenuItem("Choose PS2 Directory");
 		choosePs2Directory.addActionListener((e) -> {
-			path.guiSelectPS2Dir();
+			path.guiSelectPS2Dir(true);
 			loadPS2Data();
 		});
 		menu.add(choosePs2Directory);
