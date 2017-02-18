@@ -11,13 +11,18 @@ buildscript {
 apply plugin: 'kotlin'
 apply plugin: 'application'
 
-mainClassName = 'net.ps2stats.ui.viewer.Viewer'
+mainClassName = 'net.ps2stats.ui.AssetViewer'
 
 defaultTasks 'run'
 
 repositories {
 	mavenCentral()
 	maven { url 'http://repo.nallar.me/' }
+}
+
+configurations {
+	provided
+	compile.extendsFrom provided
 }
 
 dependencies {
@@ -33,3 +38,16 @@ dependencies {
 task wrapper(type: Wrapper) {
 	gradleVersion = "3.3"
 }
+
+jar {
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	from((configurations.runtime - configurations.provided).filter { it.exists() }.collect {
+		it.isDirectory() ? it : zipTree(it)
+	}) {
+		exclude "META-INF/**"
+	}
+	manifest {
+		attributes 'Main-Class': mainClassName
+	}
+}
+

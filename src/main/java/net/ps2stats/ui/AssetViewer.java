@@ -1,4 +1,4 @@
-package net.ps2stats.ui.viewer;
+package net.ps2stats.ui;
 
 import com.google.common.html.HtmlEscapers;
 import com.intellij.uiDesigner.core.GridConstraints;

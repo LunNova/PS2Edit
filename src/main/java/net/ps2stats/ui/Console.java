@@ -1,9 +1,8 @@
-package net.ps2stats.ui.viewer;
+package net.ps2stats.ui;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import lombok.val;
-import net.ps2stats.ui.MessageConsole;
 
 import javax.swing.*;
 import java.awt.*;
