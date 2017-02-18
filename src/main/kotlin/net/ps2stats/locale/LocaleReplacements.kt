@@ -5,6 +5,7 @@ import java.io.File
 class LocaleReplacements {
     val textSubstitutions = mutableMapOf<String, String>()
 	val textSubstitutionsCaseSensitive = mutableMapOf<String, String>()
+	val textSubstitutionsExact = mutableMapOf<String, String>()
     val idSubstitutions = mutableMapOf<Long, String>()
 
     fun load(file: File) {
@@ -25,6 +26,7 @@ class LocaleReplacements {
             var inSub = 0
 			var caseSensitive = false
 			var caseSensitiveAuto = false
+			var isExact = false
             var from = ""
             file.forEachLine {
 				var line = it.trim('\t')
@@ -42,18 +44,21 @@ class LocaleReplacements {
 							textSubstitutionsCaseSensitive[from.toUpperCase()] = line.toUpperCase()
 							textSubstitutionsCaseSensitive[from.toLowerCase()] = line.toLowerCase()
 						} else {
-							(if (caseSensitive) textSubstitutionsCaseSensitive else textSubstitutions)[from] = line
+
+							(if (caseSensitive) textSubstitutionsCaseSensitive else if (isExact) textSubstitutionsExact else textSubstitutions)[from] = line
 						}
                         from = ""
                     }
-                    inSub--
+					if (--inSub == 0) {
+						caseSensitive = false
+						caseSensitiveAuto = false
+						isExact = false
+					}
 
                     return@forEachLine
                 }
 				if (trimmed == "sub:") {
 					inSub = 2
-					caseSensitive = false
-					caseSensitiveAuto = false
 					return@forEachLine
 				}
 				if (trimmed == "cssub:") {
@@ -64,6 +69,11 @@ class LocaleReplacements {
 				if (trimmed == "casub:") {
 					inSub = 2
 					caseSensitiveAuto = true
+					return@forEachLine
+				}
+				if (trimmed == "exsub:") {
+					inSub = 2
+					isExact = true
 					return@forEachLine
 				}
                 val index = line.indexOf(':')
