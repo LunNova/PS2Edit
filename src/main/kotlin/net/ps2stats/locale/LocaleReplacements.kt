@@ -39,9 +39,9 @@ class LocaleReplacements {
                         from = line
                     } else {
 						if (caseSensitiveAuto) {
+							textSubstitutionsCaseSensitive[from] = line
 							textSubstitutionsCaseSensitive[from.toUpperCase()] = line.toUpperCase()
 							textSubstitutionsCaseSensitive[from.toLowerCase()] = line.toLowerCase()
-							textSubstitutionsCaseSensitive[toTitleCase(from)] = toTitleCase(line)
 						} else {
 							(if (caseSensitive) textSubstitutionsCaseSensitive else textSubstitutions)[from] = line
 						}
@@ -79,19 +79,6 @@ class LocaleReplacements {
                 error("Unmatched substitution")
         }
     }
-
-	fun toTitleCase(s: String): String {
-		val sb = StringBuilder()
-		var capNext = true
-
-		s.forEach { c_ ->
-			val c = if (capNext) Character.toUpperCase(c_) else Character.toLowerCase(c_)
-			sb.append(c)
-			capNext = c == ' ' || c == '-'
-		}
-
-		return sb.toString()
-	}
 
     fun save(file: File) {
         file.bufferedWriter().use { writer ->
