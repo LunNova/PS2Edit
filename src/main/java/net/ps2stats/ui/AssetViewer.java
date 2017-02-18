@@ -341,8 +341,8 @@ public class AssetViewer {
 
 			menu.remove(exportMap);
 			if (list.getSelectedValue() != null &&
-					list.getSelectedValue().toLowerCase().contains("tile_") &&
-					list.getSelectedValue().toLowerCase().contains("lod0")) {
+				list.getSelectedValue().toLowerCase().contains("tile_") &&
+				list.getSelectedValue().toLowerCase().contains("lod0")) {
 				menu.add(exportMap);
 			}
 
