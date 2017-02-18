@@ -27,14 +27,13 @@ class LocaleReplacements {
 			var caseSensitiveAuto = false
             var from = ""
             file.forEachLine {
-                var line = it
-                if (line.isBlank() || line[0] == '#')
+				var line = it.trim('\t')
+				val trimmed = line.trim()
+				if (trimmed.isEmpty() || trimmed[0] == '#')
                     return@forEachLine
 
                 if (inSub > 0) {
-                    if (!line.startsWith('\t'))
-                        error("Substitution lines should be indented with tab character")
-                    line = line.trimStart('\t').replace("\\n", "\r\n")
+					line = line.replace("\\n", "\r\n")
                     if (inSub == 2) {
                         from = line
                     } else {
@@ -51,18 +50,18 @@ class LocaleReplacements {
 
                     return@forEachLine
                 }
-				if (line == "sub:") {
+				if (trimmed == "sub:") {
 					inSub = 2
 					caseSensitive = false
 					caseSensitiveAuto = false
 					return@forEachLine
 				}
-				if (line == "cssub:") {
+				if (trimmed == "cssub:") {
 					inSub = 2
 					caseSensitive = true
 					return@forEachLine
 				}
-				if (line == "casub:") {
+				if (trimmed == "casub:") {
 					inSub = 2
 					caseSensitiveAuto = true
 					return@forEachLine
