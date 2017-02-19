@@ -113,6 +113,10 @@ class LocaleReplacements {
 		locale.entries.forEach { entry ->
 			val text = entry.text
 			var newText = text
+			textSubstitutionsExact.forEach {
+				if (newText == it.key)
+					newText = it.value
+			}
 			textSubstitutions.forEach {
 				newText = newText.replace(it.key, it.value, true)
 			}
