@@ -46,7 +46,7 @@ object AssetReplacer {
 			var entry: String? = null
 			var previousLine: String? = null
 
-			effectsFile.readLines().forEach {
+			effectsReader.readLines().forEach {
 				var line = it
 				if (!line.trim { it <= ' ' }.isEmpty() && line[0] != '#') {
 					line = line.replace("\t", "").replace("\\t", "\t")
