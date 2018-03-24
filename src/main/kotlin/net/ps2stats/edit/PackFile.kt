@@ -1,14 +1,20 @@
 package net.ps2stats.edit
 
+import net.ps2stats.BufferUtil
 import sun.nio.ch.DirectBuffer
 import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile
+import java.lang.reflect.Method
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel.MapMode
 import java.nio.charset.Charset
 import java.util.*
 import java.util.zip.CRC32
+import java.security.PrivilegedActionException
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
+import java.nio.ByteBuffer
 
 class PackFile(val file: File) {
 	val entryMap: MutableMap<String, PackFile.Entry> = HashMap()
@@ -129,7 +135,7 @@ class PackFile(val file: File) {
 	}
 
 	private fun close_() {
-		(this.f as DirectBuffer).cleaner().clean()
+		f?.let { BufferUtil.closeMappedBuffer(it) }
 		this.f = null
 	}
 
