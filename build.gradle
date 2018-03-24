@@ -1,5 +1,5 @@
 buildscript {
-	ext.kotlin_version = '1.0.6'
+	ext.kotlin_version = '1.2.31'
 	repositories {
 		mavenCentral()
 	}
@@ -36,7 +36,7 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "3.3"
+	gradleVersion = "4.6"
 }
 
 jar {
